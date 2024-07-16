@@ -1,5 +1,5 @@
 const bcrypt = require('bcrypt');
-const { findUserByMailOrPhone, updateUserPassword }= require( '../database/requests.js');
+const { findUserByMailOrPhone, updateUserPassword, find_UserByMailOrPhone }= require( '../database/requests.js');
 
  const resetPassword = async (req, res) => {
   const { email, phone1, newPassword } = req.body;
@@ -10,7 +10,7 @@ const { findUserByMailOrPhone, updateUserPassword }= require( '../database/reque
   } */
 
   try {
-    const user = await findUserByMailOrPhone(email, phone1);
+    const user = await find_UserByMailOrPhone(email, phone1);
     console.log('User found:', user); // Debug log
 
     if (!user) {

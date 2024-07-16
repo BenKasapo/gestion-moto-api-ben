@@ -1246,6 +1246,17 @@ const updateUserPassword = async (identifier, hashedPassword) => {
     });
   };
 
+  const find_UserByMailOrPhone = async (email, phone1) => {
+    return await prisma.user.findFirst({
+      where: {
+        OR: [
+          email ? { email } : {},
+          phone1 ? { phone1 } : {},
+        ],
+      },
+    });
+  };
+  
 
 
 
@@ -1261,5 +1272,5 @@ module.exports = {
     createUser, retrieveUsers, retrieveUser, changeUser, removeUser, findUserByMailOrPhone,
     createUserProfile, retrieveUserProfiles, retrieveUserProfile, changeUserProfile, removeUserProfile,
     createPayment, retrievePayments, retrievePayment, changePayment, removePayment,
-    findUserByMailOrPhone,updateUserPassword
+    findUserByMailOrPhone,updateUserPassword,find_UserByMailOrPhone
 };
