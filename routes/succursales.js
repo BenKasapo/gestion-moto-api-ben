@@ -9,10 +9,14 @@ const {
 } = require('../controllers/succursales');
 const router = express.Router();
 
-router.post('/', createSuccursaleHandler);
-router.get('/', getSuccursalesHandler);
-router.get('/:id', getSuccursaleByIdHandler);
-router.put('/:id', updateSuccursaleHandler);
-router.delete('/:id', deleteSuccursaleHandler);
+router.route('/')
+.get( getSuccursalesHandler)
+.post(createSuccursaleHandler);
+
+router.route('/:id', getSuccursaleByIdHandler)
+.get(getSuccursaleByIdHandler)
+.put(updateSuccursaleHandler)
+.delete(deleteSuccursaleHandler);
+
 
 module.exports = router;
