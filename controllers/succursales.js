@@ -9,6 +9,10 @@ const {
   
   const createSuccursaleHandler = async (req, res) => {
     const { nom, association_id } = req.body;
+
+    if (!association_id && !nom) {
+        return res.status(400).json({ message: 'association_id and name is required' });
+      }
   
     try {
       const succursale = await createSuccursale(nom, association_id);
