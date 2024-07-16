@@ -1242,7 +1242,7 @@ const removeUserProfile = async (profile_id) => {
 const updateUserPassword = async (identifier, hashedPassword) => {
     return await prisma.user.update({
       where: identifier,
-      data: { hashedPassword },
+      data: { password:hashedPassword },
     });
   };
 

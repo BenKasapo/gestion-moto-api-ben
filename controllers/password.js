@@ -3,9 +3,15 @@ const { findUserByMailOrPhone, updateUserPassword }= require( '../database/reque
 
  const resetPassword = async (req, res) => {
   const { email, phone1, newPassword } = req.body;
+  console.log('Received reset password request for email:', email, 'and phone1:', phone1); // Debug log
+
+  if (!email && !phone1) {
+    return res.status(400).json({ message: 'Email or phone number is required' });
+  }
 
   try {
     const user = await findUserByMailOrPhone(email, phone1);
+    console.log('User found:', user); // Debug log
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
