@@ -1260,12 +1260,15 @@ const updateUserPassword = async (identifier, hashedPassword) => {
 
 
 
+
 // Succursale Functions
 const createSuccursale = async (nom, association_id) => {
   return await prisma.succursale.create({
     data: {
       nom,
-      association_id,
+      association: {
+        connect: { id: association_id },
+      },
     },
   });
 };
@@ -1283,7 +1286,12 @@ const getSuccursaleById = async (id) => {
 const updateSuccursale = async (id, nom, association_id) => {
   return await prisma.succursale.update({
     where: { id },
-    data: { nom, association_id },
+    data: {
+      nom,
+      association: {
+        connect: { id: association_id },
+      },
+    },
   });
 };
 
@@ -1292,6 +1300,7 @@ const deleteSuccursale = async (id) => {
     where: { id },
   });
 };
+
 
 
 
@@ -1310,6 +1319,10 @@ module.exports = {
     createUserProfile, retrieveUserProfiles, retrieveUserProfile, changeUserProfile, removeUserProfile,
     createPayment, retrievePayments, retrievePayment, changePayment, removePayment,
     findUserByMailOrPhone,updateUserPassword,find_UserByMailOrPhone,createSuccursale,
+    getSuccursales,
+    getSuccursaleById,
+    updateSuccursale,
+    deleteSuccursale,createSuccursale,
     getSuccursales,
     getSuccursaleById,
     updateSuccursale,
