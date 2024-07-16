@@ -5,6 +5,6 @@ const { resetPassword } = require("../controllers/password")
 
 const router = express.Router()
 
-router.post("/password", resetPassword)
+router.route("/").post(resetPassword)
 
 module.exports = router
