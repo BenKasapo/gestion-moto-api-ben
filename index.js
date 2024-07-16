@@ -16,7 +16,7 @@ const paymentRouter = require('./routes/payments');
 const LocalStrategy = require('./config/passport');
 const { findUserByMailOrPhone } = require('./database/requests');
 const checkUserAuthenticated = require('./middlewares/checkUserAuthenticated');
-const passwordResetRouter = require('./routes/PasswordReset');
+const passwordResetRouter = require('./routes/password');
 
 
 
@@ -58,7 +58,7 @@ server.use("/contribution-types", contribTypeRouter);
 server.use("/users", userRouter);
 server.use("/profiles", profileRouter);
 server.use("/payments", paymentRouter);
-server.use("/reset_password", passwordResetRouter);
+server.use("/password", passwordResetRouter);
 
 
 server.listen(port, () => {
