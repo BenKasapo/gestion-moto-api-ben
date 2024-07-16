@@ -1238,6 +1238,16 @@ const removeUserProfile = async (profile_id) => {
 
 
 
+  
+const updateUserPassword = async (identifier, hashedPassword) => {
+    return await prisma.user.update({
+      where: identifier,
+      data: { hashedPassword },
+    });
+  };
+
+
+
 
 module.exports = {
     createAssociation, retrieveAssociations, retrieveAssociation, changeAssociation, removeAssociation,
@@ -1251,5 +1261,5 @@ module.exports = {
     createUser, retrieveUsers, retrieveUser, changeUser, removeUser, findUserByMailOrPhone,
     createUserProfile, retrieveUserProfiles, retrieveUserProfile, changeUserProfile, removeUserProfile,
     createPayment, retrievePayments, retrievePayment, changePayment, removePayment,
-    findUserByMailOrPhone
+    findUserByMailOrPhone,updateUserPassword
 };
