@@ -1,7 +1,7 @@
-import bcrypt from 'bcrypt';
-import { findUserByMailOrPhone, updateUserPassword } from '../database/requests.js';
+const bcrypt = require('bcrypt');
+const { findUserByMailOrPhone, updateUserPassword }= require( '../database/requests.js');
 
-export const resetPassword = async (req, res) => {
+ const resetPassword = async (req, res) => {
   const { email, phone1, newPassword } = req.body;
 
   try {
@@ -21,3 +21,5 @@ export const resetPassword = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+
+module.exports = { resetPassword }
