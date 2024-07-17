@@ -126,12 +126,17 @@ const changeAssociation = async (association_id, datas) => {
                     id: parseInt(association_id)
                 },
                 data: {
-                    ...datas
+                    ...datas,
+                    programme: {
+                        connect: {
+                            nom: datas.programme
+                        }
+                    }
                 }
             });
 
             // Mettez à jour les références dans les autres tables
-            const relatedNotifs = await prisma.notifcation.findMany()
+            const relatedNotifs = await prisma.notification.findMany()
             if (relatedNotifs.length !== 0) {
                 await prisma.notification.updateMany({
                     where: {
@@ -1233,6 +1238,73 @@ const removeUserProfile = async (profile_id) => {
 
 
 
+  
+const updateUserPassword = async (identifier, hashedPassword) => {
+    return await prisma.user.update({
+      where: identifier,
+      data: { password:hashedPassword },
+    });
+  };
+
+  const find_UserByMailOrPhone = async (email, phone1) => {
+    return await prisma.user.findFirst({
+      where: {
+        OR: [
+          email ? { email } : {},
+          phone1 ? { phone1 } : {},
+        ],
+      },
+    });
+  };
+
+
+
+
+
+// Succursale Functions
+const createSuccursale = async (nom, association_id) => {
+  return await prisma.succursale.create({
+    data: {
+      nom,
+      association: {
+        connect: { id: association_id },
+      },
+    },
+  });
+};
+
+const getSuccursales = async () => {
+  return await prisma.succursale.findMany();
+};
+
+const getSuccursaleById = async (id) => {
+  return await prisma.succursale.findUnique({
+    where: { id },
+  });
+};
+
+const updateSuccursale = async (id, nom, association_id) => {
+  return await prisma.succursale.update({
+    where: { id },
+    data: {
+      nom,
+      association: {
+        connect: { id: association_id },
+      },
+    },
+  });
+};
+
+const deleteSuccursale = async (id) => {
+  return await prisma.succursale.delete({
+    where: { id },
+  });
+};
+
+
+
+
+
 
 module.exports = {
     createAssociation, retrieveAssociations, retrieveAssociation, changeAssociation, removeAssociation,
@@ -1246,5 +1318,13 @@ module.exports = {
     createUser, retrieveUsers, retrieveUser, changeUser, removeUser, findUserByMailOrPhone,
     createUserProfile, retrieveUserProfiles, retrieveUserProfile, changeUserProfile, removeUserProfile,
     createPayment, retrievePayments, retrievePayment, changePayment, removePayment,
-    findUserByMailOrPhone
+    findUserByMailOrPhone,updateUserPassword,find_UserByMailOrPhone,createSuccursale,
+    getSuccursales,
+    getSuccursaleById,
+    updateSuccursale,
+    deleteSuccursale,createSuccursale,
+    getSuccursales,
+    getSuccursaleById,
+    updateSuccursale,
+    deleteSuccursale
 };

@@ -16,6 +16,9 @@ const paymentRouter = require('./routes/payments');
 const LocalStrategy = require('./config/passport');
 const { findUserByMailOrPhone } = require('./database/requests');
 const checkUserAuthenticated = require('./middlewares/checkUserAuthenticated');
+const passwordResetRouter = require('./routes/password');
+const succursaleRouter = require('./routes/succursales'); // Import the succursale routes
+
 
 
 // Configurations
@@ -56,6 +59,8 @@ server.use("/contribution-types", contribTypeRouter);
 server.use("/users", userRouter);
 server.use("/profiles", profileRouter);
 server.use("/payments", paymentRouter);
+server.use("/password", passwordResetRouter);
+server.use("/succursales", succursaleRouter);
 
 
 server.listen(port, () => {

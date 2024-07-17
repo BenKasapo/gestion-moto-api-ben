@@ -8,7 +8,7 @@ const {
     retrieveUserProfiles,
     retrieveUserProfile,
     changeUserProfile,
-    removeUserProfile
+    removeUserProfile,
  } = require("../database/requests")
 
 const addUser = async (req, res) => {
@@ -85,6 +85,8 @@ const deleteUserProfile = async (req, res) => {
     }
 }
 
+
+
 module.exports = {
     addUser,
     getUsers,
@@ -95,5 +97,5 @@ module.exports = {
     getUserProfiles,
     getUserProfile,
     updateUserProfile,
-    deleteUserProfile
+    deleteUserProfile,
 };
