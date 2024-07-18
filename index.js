@@ -59,7 +59,7 @@ server.use("/contribution-types", contribTypeRouter);
 server.use("/users", userRouter);
 server.use("/profiles", profileRouter);
 server.use("/payments", paymentRouter);
-server.use("/password", passwordResetRouter);
+server.use("/reset_password", passwordResetRouter);
 server.use("/succursales", succursaleRouter);
 
 
