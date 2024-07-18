@@ -1079,8 +1079,27 @@ const changeUser = async (user_id, datas) => {
                 id : user_id
             },
             data : {
-                ...datas,
-                date_naissance: new Date(datas.date_naissance)
+                //...datas,
+                nom: datas.nom,
+                prenom: datas.prenom,
+                postnom: datas.postnom,
+                email: datas.email,
+                password: datas.password,
+                phone1: datas.phone1,
+                phone2: datas.phone2,
+                lieu_naissance: datas.lieu_naissance,
+                date_naissance: datas.date_naissance,
+                profil: {
+                    connect:{
+                        label:datas.profil
+                    }
+                },
+                date_naissance: new Date(datas.date_naissance),
+                association :{
+                    connect:{
+                        nom:datas.association,
+                    }
+                }
             }
         });
         return true;
@@ -1240,14 +1259,15 @@ const removeUserProfile = async (profile_id) => {
 
   
 const updateUserPassword = async (identifier, hashedPassword) => {
-    return await prisma.user.update({
-      where: identifier,
+    return await prisma.utilisateur.update({
+      where:{id: identifier,
+        },
       data: { password:hashedPassword },
     });
   };
 
   const find_UserByMailOrPhone = async (email, phone1) => {
-    return await prisma.user.findFirst({
+    return await prisma.utilisateur.findFirst({
       where: {
         OR: [
           email ? { email } : {},
