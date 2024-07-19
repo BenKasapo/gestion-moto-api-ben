@@ -8,7 +8,8 @@ const {
  } = require("../database/requests")
 
 const addPeriod = async (req, res) => {
-    if (!await createPeriod(req.body)) {
+    const {label,id_cotisation} = req.body
+    if (!await createPeriod(label,id_cotisation)) {
         res.status(500).send("Cannot create Period")
     } else {
         res.status(201).send("Period created")
@@ -44,7 +45,8 @@ const getPeriod = async (req, res) => {
 }
 
 const updatePeriod = async (req, res) => {
-    if (!await changePeriod(req.params.id)) {
+    const { label,id_cotisation } = req.body
+    if (!await changePeriod(req.params.id,label,id_cotisation)) {
         res.status(500).send("Cannot update Period")
     } else {
         res.status(200).send("Period updated")
