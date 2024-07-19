@@ -9,7 +9,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -29,6 +29,7 @@ model Association{
 model Cotisation{
   id Int @id @unique @default(autoincrement())
   label String @unique
+  montant Float
   devise String
   date_creation DateTime @default(now())
   isActive Boolean
@@ -38,9 +39,11 @@ model Cotisation{
   type_cotisation Type_Cotisation @relation(references: [label], fields: [type_cotisation_label])
   type_cotisation_label String
   paiements Paiement[]
+
+  Periode Periode[]
 }
 
-model Moto{
+model Vehicule{
   id Int @id @unique @default(autoincrement())
   marque String
   modele String
@@ -75,6 +78,18 @@ model Paiement{
   cotisation_label String
   utilisateur Utilisateur @relation(references: [id], fields: [utilisateur_id])
   utilisateur_id String
+  periode_id Int
+  periode    Periode @relation(fields: [periode_id], references: [id])
+}
+
+model Periode{
+  id Int @unique @default(autoincrement())
+  label String
+  //doit etre en lien avec cotisation
+  cotisation Cotisation @relation(fields: [id_cotisation], references: [id])
+  id_cotisation Int
+
+  Paiement Paiement[]
 }
 
 
@@ -135,6 +150,6 @@ model Utilisateur{
   profil Profil_Utilisateur @relation(references: [label], fields: [profil_label])
   profil_label String
   paiements Paiement[]
-  moto Moto[]
+  vehicule Vehicule[]
 
 }
