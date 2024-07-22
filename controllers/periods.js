@@ -4,7 +4,8 @@ const {
     retrievePeriod,
     changePeriod,
     removePeriod,
-    retrieveUnpaidPeriods
+    retrieveUnpaidPeriods,
+    retrievePeriodsForCotisation
  } = require("../database/requests")
 
 const addPeriod = async (req, res) => {
@@ -28,15 +29,20 @@ const getPeriods = async (req, res) => {
 }
 
 const getUnpaidPeriods = async (req,res) => {
-   const { id_user,id_cotisation } = req.query
+   const { id_user,id_cotisation } = req.params
 
     let perms;
     if (req.query) {
-        perms = await retrieveUnpaidPeriods(id_user,id_cotisation)
+        perms = await retrieveUnpaidPeriods(id_user, parseInt(id_cotisation))
     }else{
-        perms = await retrieveUnpaidPeriods(id_user,id_cotisation)
+        perms = await retrieveUnpaidPeriods(id_user,parseInt(id_cotisation))
     }
     res.status(200).json(perms)    
+}
+
+const getPeriodsForCotisation = async (req, res) => {
+    const perm = await retrievePeriodsForCotisation(req.params.id)
+    res.status(200).json(perm)
 }
 
 const getPeriod = async (req, res) => {
@@ -68,4 +74,5 @@ module.exports = {
     updatePeriod,
     deletePeriod,
     getUnpaidPeriods,
+    getPeriodsForCotisation
 };

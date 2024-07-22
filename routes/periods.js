@@ -5,7 +5,8 @@ const {
     getPeriod,
     updatePeriod,
     deletePeriod,
-    getUnpaidPeriods
+    getUnpaidPeriods,
+    getPeriodsForCotisation
  } = require('../controllers/periods');
 const router = express.Router()
 
@@ -21,5 +22,8 @@ router.route("/:id")
 
 router.route("/get_unpaid_periods/:id_user/:id_cotisation")
 .get(getUnpaidPeriods)
+
+router.route("/get_periods_for_cotisation/:id_cotisation")
+.get(getPeriodsForCotisation)
 
 module.exports = router;

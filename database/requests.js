@@ -1440,9 +1440,16 @@ const retrieveUnpaidPeriods = async (id_user, id_cotisation) => {
     return  unpaid_periods;
   };
 
+  const retrievePeriodsForCotisation = async (id_cotisation) => {
+    return periods = await prisma.Periode.findMany({
+        where: {
+            id_cotisation: id_cotisation,
+          },
+    })
+}
   
 
-
+  
 
 
 
@@ -1472,5 +1479,6 @@ module.exports = {
     changePeriod,
     removePeriod,
     retrieveUnpaidPeriods,
-    createPeriod
+    createPeriod,
+    retrievePeriodsForCotisation
 };
