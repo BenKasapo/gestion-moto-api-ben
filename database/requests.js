@@ -744,7 +744,7 @@ const retrievePayment = async (payment_id) => {
     }
 }
 
-const retrievePaymentsForUser = async (user_id) => {
+const retrievePaymentsForDriver = async (user_id) => {
     try {
         const payment = await prisma.paiement.findMany({
             where : {
@@ -756,6 +756,7 @@ const retrievePaymentsForUser = async (user_id) => {
         console.error(error);
     }
 }
+
 
 const changePayment = async (payment_id, datas) => {
     try {
@@ -1464,7 +1465,7 @@ module.exports = {
     createContributionType, retrieveContributionTypes, retrieveContributionType, changeContributionType, removeContributionType,
     createUser, retrieveUsers, retrieveUser, changeUser, removeUser, findUserByMailOrPhone,
     createUserProfile, retrieveUserProfiles, retrieveUserProfile, changeUserProfile, removeUserProfile,
-    createPayment, retrievePayments, retrievePayment, changePayment, removePayment,retrievePaymentsForUser,
+    createPayment, retrievePayments, retrievePayment, changePayment, removePayment,retrievePaymentsForDriver,
     findUserByMailOrPhone,updateUserPassword,find_UserByMailOrPhone,createSuccursale,
     getSuccursales,
     getSuccursaleById,

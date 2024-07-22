@@ -3,7 +3,8 @@ const {
     retrievePayments,
     retrievePayment,
     changePayment,
-    removePayment
+    removePayment,
+    retrievePaymentsForDriver
  } = require("../database/requests")
 
 const addPayment = async (req, res) => {
@@ -41,10 +42,16 @@ const deletePayment = async (req, res) => {
     }
 }
 
+const getPaymentsForDriver = async (req,res) => {
+    const payments = await retrievePaymentsForDriver(req.params.id_driver);
+    res.status(200).json(payments)    
+}
+
 module.exports = {
     addPayment,
     getPayments,
     getPayment,
     updatePayment,
-    deletePayment
+    deletePayment,
+    getPaymentsForDriver
 };
