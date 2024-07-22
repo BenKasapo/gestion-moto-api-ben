@@ -60,7 +60,7 @@ const updatePeriod = async (req, res) => {
 }
 
 const deletePeriod = async (req, res) => {
-    if (!await removePeriod(req.params.id)) {
+    if ( !await removePeriod( parseInt(req.params.id)) ) {
         res.status(500).send("Cannot delete Period")
     } else {
         res.status().send("Period deleted")
