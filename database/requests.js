@@ -1357,7 +1357,7 @@ const createPeriod = async (label, id_cotisation) => {
       },
     });
   };
-  
+
   // Récupérer toutes les périodes
   const retrievePeriods = async () => {
     return await prisma.Periode.findMany();
@@ -1406,8 +1406,8 @@ const retrieveUnpaidPeriods = async (id_user, id_cotisation) => {
           periode_id: true,
         },
       });
-      console.log("LES PAIMENTS")
-      console.log(paiementIds)
+      //console.log("LES PAIMENTS")
+      //console.log(paiementIds)
 
 
       const periods_for_cotisation = await prisma.Periode.findMany({
@@ -1419,8 +1419,8 @@ const retrieveUnpaidPeriods = async (id_user, id_cotisation) => {
       });
 
 
-      console.log("LES PERIODES")
-      console.log(periods_for_cotisation)
+      //console.log("LES PERIODES")
+      //console.log(periods_for_cotisation)
 
 
 
@@ -1439,6 +1439,7 @@ const retrieveUnpaidPeriods = async (id_user, id_cotisation) => {
   
     return  unpaid_periods;
   };
+
   
 
 
