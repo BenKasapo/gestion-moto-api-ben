@@ -41,7 +41,7 @@ const getUnpaidPeriods = async (req,res) => {
 }
 
 const getPeriodsForCotisation = async (req, res) => {
-    const perm = await retrievePeriodsForCotisation(req.params.id)
+    const perm = await retrievePeriodsForCotisation(parseInt(req.params.id_cotisation))
     res.status(200).json(perm)
 }
 
