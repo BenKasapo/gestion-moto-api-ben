@@ -680,6 +680,8 @@ const removeNotification = async (notif_id) => {
 
 // Payments requests handlers
 
+
+
 const createPayment = async (datas) => {
     try {
         await prisma.paiement.create({
@@ -694,6 +696,11 @@ const createPayment = async (datas) => {
                     connect : {
                         id : datas.utilisateur
                     }
+                },
+                periode : {
+                    connect : {
+                        id : datas.periode
+                    }
                 }
             }
         });
@@ -703,6 +710,7 @@ const createPayment = async (datas) => {
         return false;
     }
 }
+
 
 const retrievePayments = async (query) => {
     const page = parseInt(query.page);
@@ -728,6 +736,19 @@ const retrievePayment = async (payment_id) => {
         const payment = await prisma.paiement.findUnique({
             where : {
                 id : parseInt(payment_id)
+            }
+        })
+        return payment;
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+const retrievePaymentsForUser = async (user_id) => {
+    try {
+        const payment = await prisma.paiement.findMany({
+            where : {
+                utilisateur_id : user_id
             }
         })
         return payment;
@@ -1325,43 +1346,42 @@ const deleteSuccursale = async (id) => {
 //Periods handlers
 
 // Créer une nouvelle période
-const createPeriod = async (debut, fin, succursale_id) => {
-  return await prisma.Periode.create({
-    data: {
-      debut,
-      fin,
-      succursale: {
-        connect: { id: succursale_id },
+// Créer une nouvelle période
+const createPeriod = async (label, id_cotisation) => {
+    return await prisma.Periode.create({
+      data: {
+        label,
+        cotisation: {
+          connect: { id: id_cotisation },
+        },
       },
-    },
-  });
-};
-
-// Récupérer toutes les périodes
-const retrievePeriods = async () => {
-  return await prisma.Periode.findMany();
-};
-
-// Récupérer une période par son id
-const retrievePeriod = async (id) => {
-  return await prisma.Periode.findUnique({
-    where: { id },
-  });
-};
-
-// Mettre à jour une période existante
-const changePeriod = async (id, debut, fin, succursale_id) => {
-  return await prisma.Periode.update({
-    where: { id },
-    data: {
-      debut,
-      fin,
-      succursale: {
-        connect: { id: succursale_id },
+    });
+  };
+  
+  // Récupérer toutes les périodes
+  const retrievePeriods = async () => {
+    return await prisma.Periode.findMany();
+  };
+  
+  // Récupérer une période par son id
+  const retrievePeriod = async (id) => {
+    return await prisma.Periode.findUnique({
+      where: { id },
+    });
+  };
+  
+  // Mettre à jour une période existante
+  const changePeriod = async (id, label, id_cotisation) => {
+    return await prisma.Periode.update({
+      where: { id },
+      data: {
+        label,
+        cotisation: {
+          connect: { id: id_cotisation },
+        },
       },
-    },
-  });
-};
+    });
+  };
 
 // Supprimer une période
 const removePeriod = async (id) => {
@@ -1371,26 +1391,53 @@ const removePeriod = async (id) => {
 };
 
 //Periode non payé par un user
-const retrieveUnpaidPeriods =  async (id_user,id_cotisation) => {
-    return await prisma.periode.findMany({
+
+const retrieveUnpaidPeriods = async (id_user, id_cotisation) => {
+    const paiementIds = await prisma.paiement.findMany({
         where: {
-          Paiement: {
-            none: {
-              utilisateur_id: id_user,
-            },
+          utilisateur: {
+            id: id_user,
           },
-          id_cotisation: {
-            in: await prisma.cotisation.findMany({
-              where: {
-                label: id_cotisation,
-              },
-              select: {
-                id: true,
-              },
-            }),
+          cotisation: {
+            id: id_cotisation,
+          },
+        },
+        select: {
+          periode_id: true,
+        },
+      });
+      console.log("LES PAIMENTS")
+      console.log(paiementIds)
+
+
+      const periods_for_cotisation = await prisma.Periode.findMany({
+        where: {
+          cotisation: {
+            id: id_cotisation,
           },
         },
       });
+
+
+      console.log("LES PERIODES")
+      console.log(periods_for_cotisation)
+
+
+
+      const unpaid_periods = periods_for_cotisation.filter(period => {
+        return !paiementIds.some(paiement => paiement.periode_id === period.id);
+      });
+
+      //return
+    /*const unPaiementsWithoutPaiedPeriodes = await prisma.periode.findMany({
+      where: {
+        id: {
+          notIn: paiementIds.map(p => p.id)
+        }
+      }
+    });*/
+  
+    return  unpaid_periods;
   };
   
 
@@ -1409,7 +1456,7 @@ module.exports = {
     createContributionType, retrieveContributionTypes, retrieveContributionType, changeContributionType, removeContributionType,
     createUser, retrieveUsers, retrieveUser, changeUser, removeUser, findUserByMailOrPhone,
     createUserProfile, retrieveUserProfiles, retrieveUserProfile, changeUserProfile, removeUserProfile,
-    createPayment, retrievePayments, retrievePayment, changePayment, removePayment,
+    createPayment, retrievePayments, retrievePayment, changePayment, removePayment,retrievePaymentsForUser,
     findUserByMailOrPhone,updateUserPassword,find_UserByMailOrPhone,createSuccursale,
     getSuccursales,
     getSuccursaleById,
@@ -1423,5 +1470,6 @@ module.exports = {
     retrievePeriod,
     changePeriod,
     removePeriod,
-    retrieveUnpaidPeriods
+    retrieveUnpaidPeriods,
+    createPeriod
 };
