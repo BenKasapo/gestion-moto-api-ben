@@ -1575,9 +1575,22 @@ const createVehicle = async (data) => {
       console.error(error);
       return false;
     }
-  };  
-
-
+  }; 
+  
+  
+  const retrieveVehiclesForUser = async (id_user) => {
+    try {
+      const vehicles = await prisma.vehicule.findMany({
+        where: {
+          utilisateur_id: id_user,
+        },
+      });
+      return vehicles;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  };
 
 module.exports = {
     createAssociation, retrieveAssociations, retrieveAssociation, changeAssociation, removeAssociation,
@@ -1611,5 +1624,6 @@ module.exports = {
     retrieveVehicles,
     retrieveVehicle,
     changeVehicle,
-    removeVehicle
+    removeVehicle,
+    retrieveVehiclesForUser   
 };

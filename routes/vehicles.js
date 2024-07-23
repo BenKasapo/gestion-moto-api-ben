@@ -4,8 +4,9 @@ const {
     addVehicle,
     getVehicle,
     updateVehicle,
-    deleteVehicle
- } = require('../controllers/Vehicles');
+    deleteVehicle,
+    getVehiclesForUser
+ } = require('../controllers/vehicles');
 const router = express.Router()
 
 router.route("/")
@@ -18,5 +19,9 @@ router.route("/:id")
 
 router.route("/:label")
 .delete(deleteVehicle)
+
+router.route("/get_vehicles_for_user/:id_user")
+.get(getVehiclesForUser)
+
 
 module.exports = router;

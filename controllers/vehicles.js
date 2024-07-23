@@ -4,6 +4,7 @@ const {
     retrieveVehicle,
     changeVehicle,
     removeVehicle,
+    retrieveVehiclesForUser
  } = require("../database/requests")
 
 const addVehicle = async (req, res) => {
@@ -26,8 +27,14 @@ const getVehicle = async (req, res) => {
     const Vehicle = await retrieveVehicle(parseInt(req.params.id) );
     res.status(200).json(Vehicle);
 }
+
+const getVehiclesForUser = async (req, res) => {
+    const vehicle = await retrieveVehiclesForUser(req.params.id_user);
+    res.status(200).json(vehicle);
+}
+
 const updateVehicle = async (req, res) => {
-    if (!await changeVehicle(req.params.id, req.body)) {
+    if (!await changeVehicle(parseInt(req.params.id), req.body)) {
         res.status(500).send("Cannot update Vehicle");        
     } else {
         res.status(200).send("Vehicle updated");
@@ -52,5 +59,6 @@ module.exports = {
     getVehicles,
     getVehicle,
     updateVehicle,
-    deleteVehicle
+    deleteVehicle,
+    getVehiclesForUser 
 };
