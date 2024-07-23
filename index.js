@@ -9,6 +9,7 @@ const contributionRouter = require('./routes/contributions');
 const notificationRouter = require('./routes/notifications');
 const permissionRouter = require('./routes/permissions');
 const periodRouter = require('./routes/periods');
+const vehicleRouter = require('./routes/vehicles');
 const programRouter = require('./routes/programs');
 const contribTypeRouter = require('./routes/type-contributions');
 const userRouter = require('./routes/users');
@@ -63,6 +64,7 @@ server.use("/payments", paymentRouter);
 server.use("/reset_password", passwordResetRouter);
 server.use("/succursales", succursaleRouter);
 server.use("/periods", periodRouter);
+server.use("/vehicles", vehicleRouter);
 
 
 

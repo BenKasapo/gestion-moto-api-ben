@@ -59,11 +59,19 @@ const updatePeriod = async (req, res) => {
     }
 }
 
-const deletePeriod = async (req, res) => {
-    if ( !await removePeriod( parseInt(req.params.id)) ) {
-        res.status(500).send("Cannot delete Period")
+const deletePeriod  = async (req, res) => {
+    if (!await removePeriod( parseInt(req.params.id) )) {
+        res.status(500).send("Cannot delete periode")
     } else {
-        res.status().send("Period deleted")
+        res.status(200).send("Periode deleted")
+    }
+}
+
+const deleteContribution = async (req, res) => {
+    if (!await removeContribution(req.params.id)) {
+        res.status(500).send("Cannot delete contribution")
+    } else {
+        res.status(200).send("Contribution deleted")
     }
 }
 

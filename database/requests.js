@@ -1385,11 +1385,24 @@ const createPeriod = async (label, id_cotisation) => {
   };
 
 // Supprimer une période
+
 const removePeriod = async (id) => {
-  return await prisma.Periode.delete({
-    where: { id },
-  });
-};
+    var response = false;
+    try {
+        response =  await prisma.Periode.delete({
+            where: {
+              id: id
+            }
+          });
+          console.log("mmmmm")
+          console.log(response)
+          return response     
+    } catch (error) {
+        console.log(response)
+        return response
+    }
+
+  };
 
 //Periode non payé par un user
 
@@ -1450,7 +1463,119 @@ const retrieveUnpaidPeriods = async (id_user, id_cotisation) => {
 }
   
 
+
+/*vehicules*/ 
+
+const createVehicle = async (data) => {
+    try {
+      const vehicleData = {
+        marque: data.marque,
+        modele: data.modele,
+        immatriculation: data.immatriculation,
+        utilisateur_id: data.utilisateur_id,
+      };
   
+      await prisma.vehicule.create({
+        data: vehicleData,
+      });
+  
+      return true;
+    } catch (error) {
+      console.error(error);
+      return false;
+    }
+  };
+  
+  const retrieveVehicles = async (query) => {
+    const page = parseInt(query.page);
+    const limit = parseInt(query.limit);
+    const utilisateur_id = query.utilisateur_id;
+  
+    try {
+      let vehicles;
+      if (utilisateur_id && page && limit) {
+        vehicles = await prisma.vehicule.findMany({
+          where: {
+            utilisateur_id: utilisateur_id,
+          },
+          skip: (page - 1) * limit,
+          take: limit,
+        });
+        return vehicles;
+      } else if (utilisateur_id) {
+        vehicles = await prisma.vehicule.findMany({
+          where: {
+            utilisateur_id: utilisateur_id,
+          },
+        });
+        return vehicles;
+      } else if (page && limit) {
+        vehicles = await prisma.vehicule.findMany({
+          skip: (page - 1) * limit,
+          take: limit,
+        });
+        return vehicles;
+      }
+      vehicles = await prisma.vehicule.findMany();
+      return vehicles;
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  
+  const retrieveVehicle = async (id) => {
+    try {
+      const vehicle = await prisma.vehicule.findUnique({
+        where: {
+          id: id,
+        },
+        select: {
+          id: true,
+          marque: true,
+          modele: true,
+          immatriculation: true,
+          utilisateur_id: true,
+        },
+      });
+      return vehicle;
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  
+  const changeVehicle = async (id, data) => {
+    try {
+      await prisma.vehicule.update({
+        where: {
+          id: id,
+        },
+        data: {
+          marque: data.marque,
+          modele: data.modele,
+          immatriculation: data.immatriculation,
+          utilisateur_id: data.utilisateur_id,
+        },
+      });
+      return true;
+    } catch (error) {
+      console.error(error);
+      return false;
+    }
+  };
+  
+  const removeVehicle = async (id) => {
+    try {
+      await prisma.vehicule.delete({
+        where: {
+          id: id,
+        },
+      });
+      return true;
+    } catch (error) {
+      console.error(error);
+      return false;
+    }
+  };  
 
 
 
@@ -1481,5 +1606,10 @@ module.exports = {
     removePeriod,
     retrieveUnpaidPeriods,
     createPeriod,
-    retrievePeriodsForCotisation
+    retrievePeriodsForCotisation,
+    createVehicle, 
+    retrieveVehicles,
+    retrieveVehicle,
+    changeVehicle,
+    removeVehicle
 };
