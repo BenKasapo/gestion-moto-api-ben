@@ -1094,6 +1094,23 @@ const retrieveUser = async (user_id) => {
         console.error(error);
     }
 }
+
+
+const getUsersByAssociation = async (association) => {
+    try {
+      return await prisma.utilisateur.findMany({
+        where: {
+          association_label: association
+        },   
+      });
+    } catch (error) {
+      console.error(error);
+      return [];
+    }
+  };
+
+
+
 const changeUser = async (user_id, datas) => {
     try {
         await prisma.utilisateur.update({
@@ -1625,5 +1642,6 @@ module.exports = {
     retrieveVehicle,
     changeVehicle,
     removeVehicle,
-    retrieveVehiclesForUser   
+    retrieveVehiclesForUser ,
+    getUsersByAssociation 
 };
