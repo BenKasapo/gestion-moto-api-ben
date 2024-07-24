@@ -48,7 +48,8 @@ const deleteNotification = async (req, res) => {
 }
 
 const sendNotification = async (req,res) => {
-    const {titre,message,association} = req.body
+    var {titre,message,association} = req.body
+    message = message+"\n-------------\nKYCAAS"
     const users = await getUsersByAssociation(association)
     const phones = users.map(user => user.phone1);
     //console.log(phones)
@@ -58,6 +59,8 @@ const sendNotification = async (req,res) => {
         //console.log(element)
         sendSMS(element,message)
     }
+
+    await createNotification(req.body)
 
     res.status(200).json(users);
 }
