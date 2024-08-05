@@ -1655,6 +1655,47 @@ const createVehicle = async (data) => {
     }
   };
 
+  const getStatsByAssociation = async (associationLabel) => {
+    const totalDrivers = await prisma.utilisateur.count({
+      where: { 
+                association_label: associationLabel,
+                profil_label: 'Chauffeur'
+       },
+    });
+  
+   
+  
+    const totalMoneyUSD = await prisma.paiement.aggregate({
+      where: {
+        cotisation: {
+          association_label: associationLabel,
+        },
+        devise: 'usd',
+      },
+      _sum: {
+        montant: true,
+      },
+    });
+  
+    const totalMoneyCDF = await prisma.paiement.aggregate({
+      where: {
+                association_label: associationLabel,
+                devise: 'cfd',
+      },
+      _sum: {
+        montant: true,
+      },
+    });
+  
+    return {
+      totalDrivers,
+      totalMoney: {
+        USD: totalMoneyUSD._sum.montant ,
+        CDF: totalMoneyCDF._sum.montant,
+      },
+    };
+  };
+
 module.exports = {
     createAssociation, retrieveAssociations, retrieveAssociation, changeAssociation, removeAssociation,
     createProgram, retrievePrograms, retrieveProgram, changeProgram, removeProgram,
@@ -1689,5 +1730,5 @@ module.exports = {
     changeVehicle,
     removeVehicle,
     retrieveVehiclesForUser ,
-    getUsersByAssociation,getStats 
+    getUsersByAssociation,getStats,getStatsByAssociation
 };
