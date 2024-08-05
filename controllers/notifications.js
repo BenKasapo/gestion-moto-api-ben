@@ -54,10 +54,12 @@ const sendNotification = async (req,res) => {
     const phones = users.map(user => user.phone1);
     //console.log(phones)
 
-    for (let index = 0; index < phones.length; index++) {
-        const element = phones[index];
-        //console.log(element)
-        sendSMS(element,message)
+    for (let phoneNumber of phones) {
+        try {
+            await sendSMS(phoneNumber,message)
+        } catch (error) {
+            console.error(error)
+        }
     }
 
     await createNotification(req.body)

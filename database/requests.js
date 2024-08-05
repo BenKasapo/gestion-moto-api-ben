@@ -979,9 +979,13 @@ const changeProgram = async (program_id, datas) => {
 }
 const removeProgram = async (program_label) => {
     try {
+        const label = await prisma.programme.findUnique({
+            where: {
+                id: Number(program_label)}
+        })
         await prisma.association.updateMany({
             where : {
-                programme_label : program_label
+                programme_label : label.nom
             },
             data : {
                 programme_label : null
@@ -989,7 +993,7 @@ const removeProgram = async (program_label) => {
         })
         await prisma.programme.delete({
             where: {
-                nom : program_label
+                nom : label.nom
             }
         })
         return true
