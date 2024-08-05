@@ -1609,6 +1609,48 @@ const createVehicle = async (data) => {
     }
   };
 
+  const getStats = async () => {
+    try {
+      const totalDrivers = await prisma.utilisateur.count({
+        where: {
+          profil_label: 'Chauffeur',
+        }
+      });
+      const totalUsers = await prisma.utilisateur.count();
+      const totalMoneyUSD = await prisma.paiement.aggregate({
+        _sum: {
+          montant: true,
+        },
+        where: {
+          devise: 'usd',
+        },
+      });
+      const totalMoneyCDF = await prisma.paiement.aggregate({
+        _sum: {
+          montant: true,
+        },
+        where: {
+          devise: 'cdf',
+        },
+      });
+      const totalAssociations = await prisma.association.count();
+      const totalPrograms = await prisma.programme.count();
+  
+      return({
+        totalDrivers,
+        totalUsers,
+        totalMoney: {
+            USD: totalMoneyUSD._sum.montant,
+            CDF: totalMoneyCDF._sum.montant,
+          },
+        totalAssociations,
+        totalPrograms,
+      });
+    } catch (error) {
+      return({ error: 'Erreur lors de la récupération des statistiques.' });
+    }
+  };
+
 module.exports = {
     createAssociation, retrieveAssociations, retrieveAssociation, changeAssociation, removeAssociation,
     createProgram, retrievePrograms, retrieveProgram, changeProgram, removeProgram,
@@ -1643,5 +1685,5 @@ module.exports = {
     changeVehicle,
     removeVehicle,
     retrieveVehiclesForUser ,
-    getUsersByAssociation 
+    getUsersByAssociation,getStats 
 };

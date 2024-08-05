@@ -20,6 +20,7 @@ const { findUserByMailOrPhone } = require('./database/requests');
 const checkUserAuthenticated = require('./middlewares/checkUserAuthenticated');
 const passwordResetRouter = require('./routes/password');
 const succursaleRouter = require('./routes/succursales'); // Import the succursale routes
+const statisticsRouter = require('./routes/statistics');
 
 
 
@@ -65,6 +66,7 @@ server.use("/reset_password", passwordResetRouter);
 server.use("/succursales", succursaleRouter);
 server.use("/periods", periodRouter);
 server.use("/vehicles", vehicleRouter);
+server.use("/statistics", statisticsRouter);
 
 
 
