@@ -1370,15 +1370,42 @@ const deleteSuccursale = async (id) => {
 // Créer une nouvelle période
 // Créer une nouvelle période
 const createPeriod = async (label, id_cotisation) => {
-    return await prisma.Periode.create({
+    // Rechercher la cotisation avec les relations nécessaires
+    const cotisation = await prisma.cotisation.findUnique({
+      where: {
+        id: id_cotisation,
+      },
+      include: {
+        association: true,
+        type_cotisation: true,
+        paiements: true, // Inclure les paiements si nécessaire
+      },
+    });
+  
+    // Vérifier si la cotisation existe
+    if (!cotisation) {
+      throw new Error(`Cotisation with ID ${id_cotisation} not found.`);
+    }
+  
+  
+    // Créer une nouvelle période et connecter la cotisation
+    return await prisma.periode.create({
       data: {
         label,
         cotisation: {
-          connect: { id: id_cotisation },
+          connect: {
+            id: cotisation.id,
+          },
         },
+      },
+      include: {
+        cotisation: true, // Inclure les détails de la cotisation dans la réponse
       },
     });
   };
+  
+ 
+  
 
   // Récupérer toutes les périodes
   const retrievePeriods = async () => {
@@ -1480,6 +1507,9 @@ const retrieveUnpaidPeriods = async (id_user, id_cotisation) => {
         where: {
             id_cotisation: id_cotisation,
           },
+          include: {
+            cotisation: true,
+          }  
     })
 }
   
