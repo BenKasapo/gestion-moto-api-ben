@@ -825,11 +825,15 @@ const retrievePermission = async (permission_id) => {
         console.error(error);
     }
 }
-const changePermission = async (permission_id) => {
+const changePermission = async (permission_id,datas) => {
     try {
         await prisma.permission.update({
             where: {
                 id: parseInt(permission_id)
+            }
+            ,
+            data: {
+                ...datas
             }
         });
         return true;
@@ -1703,18 +1707,20 @@ const createVehicle = async (data) => {
         devise: 'usd',
       },
       _sum: {
-        montant: true,
+        montant: true  ,
       },
     });
   
     const totalMoneyCDF = await prisma.paiement.aggregate({
-      where: {
-                association_label: associationLabel,
-                devise: 'cfd',
-      },
-      _sum: {
-        montant: true,
-      },
+        where: {
+            cotisation: {
+              association_label: associationLabel,
+            },
+            devise: 'cfd',
+          },
+          _sum: {
+            montant: true,
+          },
     });
   
     return {

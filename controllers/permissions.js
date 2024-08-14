@@ -31,7 +31,7 @@ const getPermission = async (req, res) => {
 }
 
 const updatePermission = async (req, res) => {
-    if (!await changePermission(req.params.id)) {
+    if (!await changePermission(req.params.id,req.body)) {
         res.status(500).send("Cannot update permission")
     } else {
         res.status(200).send("Permission updated")
@@ -42,7 +42,7 @@ const deletePermission = async (req, res) => {
     if (!await removePermission(req.params.id)) {
         res.status(500).send("Cannot delete permission")
     } else {
-        res.status().send("Permission deleted")
+        res.status(200).send("Permission deleted")
     }
 }
 
