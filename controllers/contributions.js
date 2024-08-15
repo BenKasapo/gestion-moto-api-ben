@@ -31,7 +31,7 @@ const getContribution = async (req, res) => {
 }
 
 const updateContribution = async (req, res) => {
-    if (!await changeContribution(req.params.id)) {
+    if (!await changeContribution(req.params.id,req.body)) {
         res.status(500).send("Cannot update contribution")
     } else {
         res.status(200).send("Contribution updated")
