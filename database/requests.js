@@ -170,13 +170,14 @@ const changeAssociation = async (association_id, datas) => {
         })
       }
 
-      const relatedBranches = await prisma.succursale.findMany()
+      /*    const relatedBranches = await prisma.succursale.findMany()
       if (relatedBranches.length !== 0) {
         await prisma.succursale.updateMany({
           where: {
             association_id: parseInt(association_id),
           },
           data: {
+            
             association: {
               connect: {
                 id: parseInt(association_id),
@@ -184,7 +185,7 @@ const changeAssociation = async (association_id, datas) => {
             },
           },
         })
-      }
+      } */
     })
 
     return true
@@ -387,19 +388,19 @@ const createContribution = async (datas) => {
   try {
     // Check if the contribution already exists
     const existingContribution = await prisma.cotisation.findFirst({
-        where: {
-            association: {
-                nom: datas.association
-            },
-            type_cotisation: {
-                label: datas.type_cotisation
-            }
-        }
-    });
+      where: {
+        association: {
+          nom: datas.association,
+        },
+        type_cotisation: {
+          label: datas.type_cotisation,
+        },
+      },
+    })
 
     if (existingContribution) {
-        // Contribution already exists, return an error
-        throw new Error('Contribution already exists');
+      // Contribution already exists, return an error
+      throw new Error("Contribution already exists")
     }
     await prisma.cotisation.create({
       data: {
@@ -975,6 +976,20 @@ const retrieveProgram = async (program_id) => {
     console.error(error)
   }
 }
+
+const retrieveProgramByAssociation = async (associationLabel) => {
+  try {
+    const assoc = await prisma.association.findUnique({
+      where: { nom: associationLabel },
+      include: { programme: true }, // Including the program details
+    })
+    if (!assoc) {
+      return "Association does not exist"
+    } else return assoc.programme
+  } catch (error) {
+    console.error(error)
+  }
+}
 const changeProgram = async (program_id, datas) => {
   try {
     await prisma.programme.update({
@@ -1104,6 +1119,8 @@ const retrieveUser = async (user_id) => {
         phone2: true,
         association_label: true,
         profil_label: true,
+        date_naissance: true,
+        lieu_naissance: true,
       },
     })
     return user
@@ -1712,6 +1729,176 @@ const getStatsByAssociation = async (associationLabel) => {
   }
 }
 
+/* const getStatsByProgram = async (programLabel) => {
+  const totalAssociations = await prisma.association.count({
+    where: {
+      programme_label: programLabel,
+    },
+  })
+
+  return {
+    totalAssociations,
+  }
+} */
+
+/* const getStatsByProgram = async (programLabel) => {
+  // Fetch associations linked to the specific program label
+  const associations = await prisma.association.findMany({
+    where: {
+      programme_label: programLabel,
+    },
+    select: {
+      id: true,
+      nom: true,
+    },
+  })
+
+  const associationIds = associations.map((association) => association?.id)
+
+  const associationNoms = associations.map((association) => association?.nom)
+
+  // Count total associations linked to the program
+  const totalAssociations = associationIds.length
+
+  // Count total payments made by all associations linked to the program
+ 
+
+  const totalMoneyUSD = await prisma.paiement.aggregate({
+    where: {
+      cotisation: {
+        association_label: associationNoms,
+      },
+      devise: "usd",
+    },
+    _sum: {
+      montant: true,
+    },
+  })
+
+  const totalMoneyCDF = await prisma.paiement.aggregate({
+    where: {
+      cotisation: {
+        association_label: associationNoms,
+      },
+      devise: "cfd",
+    },
+    _sum: {
+      montant: true,
+    },
+  })
+
+  // Count number of all drivers from all associations linked to the program
+  const totalDrivers = await prisma.utilisateur.count({
+    where: {
+      profil_label: "Chauffeur",
+      association: {
+        nom: {
+          in: associationNoms,
+        },
+      },
+    },
+  })
+  console.log("totalDrivers", totalDrivers)
+  return {
+    totalAssociations,
+    totalMoney: {
+      USD: totalMoneyUSD._sum.montant,
+      CDF: totalMoneyCDF._sum.montant,
+    },
+    totalDrivers,
+  }
+
+  const totalSuccursales = await prisma.succursale.count({
+    where: {},
+  })
+}
+ */
+const getStatsByProgram = async (programLabel) => {
+  try {
+    // Fetch associations linked to the specific program label
+    const associations = await prisma.association.findMany({
+      where: {
+        programme_label: programLabel,
+      },
+      select: {
+        id: true,
+        nom: true,
+      },
+    });
+
+    const associationIds = associations.map((association) => association?.id);
+    const associationNoms = associations.map((association) => association?.nom);
+
+    // Count total associations linked to the program
+    const totalAssociations = associationIds.length;
+
+    // Aggregate total payments in USD and CDF for associations linked to the program
+    const totalMoneyUSD = await prisma.paiement.aggregate({
+      where: {
+        cotisation: {
+          association_label: {
+            in: associationNoms,
+          },
+        },
+        devise: "USD",
+      },
+      _sum: {
+        montant: true,
+      },
+    });
+
+    const totalMoneyCDF = await prisma.paiement.aggregate({
+      where: {
+        cotisation: {
+          association_label: {
+            in: associationNoms,
+          },
+        },
+        devise: "CDF",
+      },
+      _sum: {
+        montant: true,
+      },
+    });
+
+    // Count number of all drivers from all associations linked to the program
+    const totalDrivers = await prisma.utilisateur.count({
+      where: {
+        profil_label: "Chauffeur",
+        association: {
+          nom: {
+            in: associationNoms,
+          },
+        },
+      },
+    });
+
+    // Count total succursales linked to associations in the program
+    const totalSuccursales = await prisma.succursale.count({
+      where: {
+        association: {
+          id: {
+            in: associationIds,
+          },
+        },
+      },
+    });
+
+    return {
+      totalAssociations,
+      totalMoney: {
+        USD: totalMoneyUSD._sum.montant || 0,
+        CDF: totalMoneyCDF._sum.montant || 0,
+      },
+      totalDrivers,
+      totalSuccursales,
+    };
+  } catch (error) {
+    console.error("Error fetching statistics:", error);
+    throw new Error("Unable to fetch program statistics.");
+  }
+};
+
 module.exports = {
   createAssociation,
   retrieveAssociations,
@@ -1721,6 +1908,7 @@ module.exports = {
   createProgram,
   retrievePrograms,
   retrieveProgram,
+  retrieveProgramByAssociation,
   changeProgram,
   removeProgram,
   createAssociationBranch,
@@ -1799,4 +1987,5 @@ module.exports = {
   getUsersByAssociation,
   getStats,
   getStatsByAssociation,
+  getStatsByProgram,
 }

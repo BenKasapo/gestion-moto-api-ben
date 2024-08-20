@@ -1,4 +1,4 @@
-const { createProgram, retrievePrograms, retrieveProgram, changeProgram, removeProgram } = require("../database/requests");
+const { createProgram, retrievePrograms, retrieveProgram, changeProgram, removeProgram, retrieveProgramByAssociation } = require("../database/requests");
 
 
 const addProgram = async (req, res) => {
@@ -25,6 +25,13 @@ const getProgram = async (req, res) => {
     const program = await retrieveProgram(req.params.id)
     res.status(200).json(program)
 }
+const getProgramByAssociation = async (req, res) => {
+    const program = await retrieveProgramByAssociation(req.params.id)
+    res.status(200).json(program)
+
+    
+
+}
 
 const updateProgram = async (req, res) => {
     if (!await changeProgram(req.params.id, req.body)) {
@@ -43,6 +50,7 @@ const deleteProgram = async (req, res) => {
 module.exports = {
     addProgram,
     getPrograms,
+    getProgramByAssociation,
     getProgram,
     updateProgram,
     deleteProgram
