@@ -70,8 +70,9 @@ model Notification{
 model Paiement{
   id Int @id @unique @default(autoincrement())
   reference String
-  devise String
+  devise String 
   montant Float
+  status  PaymentStatus   @default(PENDING)
   created_at DateTime @default(now())
   //Relation fields
   cotisation Cotisation @relation(references: [label], fields: [cotisation_label])
@@ -152,4 +153,10 @@ model Utilisateur{
   paiements Paiement[]
   vehicule Vehicule[]
 
+}
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
 }

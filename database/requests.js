@@ -736,10 +736,17 @@ const retrievePayments = async (query) => {
       const payments = await prisma.paiement.findMany({
         skip: (page - 1) * limit,
         take: limit,
+        where: {
+          isPaid: true,
+        },
       })
       return payments
     } else {
-      const payments = await prisma.paiement.findMany()
+      const payments = await prisma.paiement.findMany({
+        where: {
+          isPaid: true,
+        },
+      })
       return payments
     }
   } catch (error) {
@@ -752,6 +759,7 @@ const retrievePayment = async (payment_id) => {
     const payment = await prisma.paiement.findUnique({
       where: {
         id: parseInt(payment_id),
+        isPaid: true,
       },
     })
     return payment
@@ -765,6 +773,7 @@ const retrievePaymentsForDriver = async (user_id) => {
     const payment = await prisma.paiement.findMany({
       where: {
         utilisateur_id: user_id,
+        isPaid: true,
       },
     })
     return payment
@@ -1474,12 +1483,15 @@ const retrieveUnpaidPeriods = async (id_user, id_cotisation) => {
         id: id_cotisation,
       },
     },
+    where: {
+      isPaid: false,
+    },
     select: {
       periode_id: true,
     },
   })
-  //console.log("LES PAIMENTS")
-  //console.log(paiementIds)
+  console.log("LES PAIMENTS")
+  console.log(paiementIds)
 
   const periods_for_cotisation = await prisma.Periode.findMany({
     where: {
@@ -1824,13 +1836,13 @@ const getStatsByProgram = async (programLabel) => {
         id: true,
         nom: true,
       },
-    });
+    })
 
-    const associationIds = associations.map((association) => association?.id);
-    const associationNoms = associations.map((association) => association?.nom);
+    const associationIds = associations.map((association) => association?.id)
+    const associationNoms = associations.map((association) => association?.nom)
 
     // Count total associations linked to the program
-    const totalAssociations = associationIds.length;
+    const totalAssociations = associationIds.length
 
     // Aggregate total payments in USD and CDF for associations linked to the program
     const totalMoneyUSD = await prisma.paiement.aggregate({
@@ -1845,7 +1857,7 @@ const getStatsByProgram = async (programLabel) => {
       _sum: {
         montant: true,
       },
-    });
+    })
 
     const totalMoneyCDF = await prisma.paiement.aggregate({
       where: {
@@ -1859,7 +1871,7 @@ const getStatsByProgram = async (programLabel) => {
       _sum: {
         montant: true,
       },
-    });
+    })
 
     // Count number of all drivers from all associations linked to the program
     const totalDrivers = await prisma.utilisateur.count({
@@ -1871,7 +1883,7 @@ const getStatsByProgram = async (programLabel) => {
           },
         },
       },
-    });
+    })
 
     // Count total succursales linked to associations in the program
     const totalSuccursales = await prisma.succursale.count({
@@ -1882,7 +1894,7 @@ const getStatsByProgram = async (programLabel) => {
           },
         },
       },
-    });
+    })
 
     return {
       totalAssociations,
@@ -1892,12 +1904,14 @@ const getStatsByProgram = async (programLabel) => {
       },
       totalDrivers,
       totalSuccursales,
-    };
+      associationNoms,
+      associationIds,
+    }
   } catch (error) {
-    console.error("Error fetching statistics:", error);
-    throw new Error("Unable to fetch program statistics.");
+    console.error("Error fetching statistics:", error)
+    throw new Error("Unable to fetch program statistics.")
   }
-};
+}
 
 module.exports = {
   createAssociation,
