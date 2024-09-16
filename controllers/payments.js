@@ -2,6 +2,7 @@ const {
   createPayment,
   retrievePayments,
   retrievePayment,
+  retrievePendingPayments,
   changePayment,
   removePayment,
   retrievePaymentsForDriver,
@@ -23,6 +24,16 @@ const getPayments = async (req, res) => {
     payments = await retrievePayments()
   }
   res.status(200).json(payments)
+}
+
+const getPendingPayments = async (req, res) => {
+  let pendingPayments
+  if (req.query) {
+    pendingPayments = await retrievePendingPayments(req.query)
+  } else {
+    pendingPayments = await retrievePendingPayments()
+  }
+  res.status(200).json(pendingPayments)
 }
 const getPayment = async (req, res) => {
   const payment = await retrievePayment(req.params.id)
@@ -59,6 +70,7 @@ const getPaymentsForDriver = async (req, res) => {
 module.exports = {
   addPayment,
   getPayments,
+  getPendingPayments,
   getPayment,
   getPaymentByPeriodId,
   updatePayment,

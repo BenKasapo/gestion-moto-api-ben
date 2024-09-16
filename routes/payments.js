@@ -3,6 +3,7 @@ const {
     addPayment,
     getPayments,
     getPayment,
+    getPendingPayments,
     getPaymentByPeriodId,
     updatePayment,
     deletePayment,
@@ -13,6 +14,9 @@ const router = express.Router()
 router.route("/")
 .get(getPayments)
 .post(addPayment)
+
+router.route("/pending")
+.get(getPendingPayments)
 
 router.route("/:id")
 .get(getPayment)

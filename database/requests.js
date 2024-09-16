@@ -727,47 +727,47 @@ const removeNotification = async (notif_id) => {
     return false
   }
 } */
-  const createPayment = async (datas) => {
-    try {
-      // Fetch the association_label for the utilisateur_id
-      const utilisateur = await prisma.utilisateur.findUnique({
-        where: { id: datas.utilisateur }, // Use the utilisateur ID from datas
-        select: { association_label: true }, // Only fetch the association_label
-      });
-  
-      if (!utilisateur || !utilisateur.association_label) {
-        throw new Error('Utilisateur ou association non trouvée');
-      }
-  
-      // Create the payment including the association_label
-      await prisma.paiement.create({
-        data: {
-          ...datas,
-          association_label: utilisateur.association_label, // Automatically set association_label
-          cotisation: {
-            connect: {
-              id: datas.cotisation,
-            },
-          },
-          utilisateur: {
-            connect: {
-              id: datas.utilisateur,
-            },
-          },
-          periode: {
-            connect: {
-              id: datas.periode,
-            },
+const createPayment = async (datas) => {
+  try {
+    // Fetch the association_label for the utilisateur_id
+    const utilisateur = await prisma.utilisateur.findUnique({
+      where: { id: datas.utilisateur }, // Use the utilisateur ID from datas
+      select: { association_label: true }, // Only fetch the association_label
+    })
+
+    if (!utilisateur || !utilisateur.association_label) {
+      throw new Error("Utilisateur ou association non trouvée")
+    }
+
+    // Create the payment including the association_label
+    await prisma.paiement.create({
+      data: {
+        ...datas,
+        association_label: utilisateur.association_label, // Automatically set association_label
+        cotisation: {
+          connect: {
+            id: datas.cotisation,
           },
         },
-      });
-  
-      return true; // Payment created successfully
-    } catch (error) {
-      console.error(error);
-      return false; // Indicate failure in payment creation
-    }
-  };
+        utilisateur: {
+          connect: {
+            id: datas.utilisateur,
+          },
+        },
+        periode: {
+          connect: {
+            id: datas.periode,
+          },
+        },
+      },
+    })
+
+    return true // Payment created successfully
+  } catch (error) {
+    console.error(error)
+    return false // Indicate failure in payment creation
+  }
+}
 
 const retrievePayments = async (query) => {
   const page = parseInt(query.page)
@@ -786,6 +786,32 @@ const retrievePayments = async (query) => {
       const payments = await prisma.paiement.findMany({
         where: {
           status: "PAID",
+        },
+      })
+      return payments
+    }
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+const retrievePendingPayments = async (query) => {
+  const page = parseInt(query.page)
+  const limit = parseInt(query.limit)
+  try {
+    if (page && limit) {
+      const payments = await prisma.paiement.findMany({
+        skip: (page - 1) * limit,
+        take: limit,
+        where: {
+          status: "PENDING",
+        },
+      })
+      return payments
+    } else {
+      const payments = await prisma.paiement.findMany({
+        where: {
+          status: "PENDING",
         },
       })
       return payments
@@ -2009,6 +2035,17 @@ const getStatsByProgram = async (programLabel) => {
   }
 }
 
+const deletePendingPayments = async () => {
+  return await prisma.paiement.deleteMany({
+    where: {
+      status: "PENDING",
+      created_at: {
+        lt: new Date(new Date() - 2 * 60 * 1000), // Optional: delete payments older than 2 minutes
+      },
+    },
+  })
+}
+
 module.exports = {
   createAssociation,
   retrieveAssociations,
@@ -2065,6 +2102,7 @@ module.exports = {
   createPayment,
   retrievePayments,
   retrievePayment,
+  retrievePendingPayments,
   retrievePaymentByPeriodId,
   changePayment,
   removePayment,
@@ -2099,4 +2137,5 @@ module.exports = {
   getStats,
   getStatsByAssociation,
   getStatsByProgram,
+  deletePendingPayments,
 }
