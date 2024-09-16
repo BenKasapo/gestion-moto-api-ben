@@ -81,6 +81,7 @@ model Paiement{
   utilisateur_id String
   periode_id Int
   periode    Periode @relation(fields: [periode_id], references: [id])
+  association_label  String?            
 }
 
 model Periode{

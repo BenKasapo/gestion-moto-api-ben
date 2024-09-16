@@ -699,7 +699,7 @@ const removeNotification = async (notif_id) => {
 
 // Payments requests handlers
 
-const createPayment = async (datas) => {
+/* const createPayment = async (datas) => {
   try {
     await prisma.paiement.create({
       data: {
@@ -726,7 +726,48 @@ const createPayment = async (datas) => {
     console.error(error)
     return false
   }
-}
+} */
+  const createPayment = async (datas) => {
+    try {
+      // Fetch the association_label for the utilisateur_id
+      const utilisateur = await prisma.utilisateur.findUnique({
+        where: { id: datas.utilisateur }, // Use the utilisateur ID from datas
+        select: { association_label: true }, // Only fetch the association_label
+      });
+  
+      if (!utilisateur || !utilisateur.association_label) {
+        throw new Error('Utilisateur ou association non trouvée');
+      }
+  
+      // Create the payment including the association_label
+      await prisma.paiement.create({
+        data: {
+          ...datas,
+          association_label: utilisateur.association_label, // Automatically set association_label
+          cotisation: {
+            connect: {
+              id: datas.cotisation,
+            },
+          },
+          utilisateur: {
+            connect: {
+              id: datas.utilisateur,
+            },
+          },
+          periode: {
+            connect: {
+              id: datas.periode,
+            },
+          },
+        },
+      });
+  
+      return true; // Payment created successfully
+    } catch (error) {
+      console.error(error);
+      return false; // Indicate failure in payment creation
+    }
+  };
 
 const retrievePayments = async (query) => {
   const page = parseInt(query.page)
@@ -1768,7 +1809,7 @@ const getStatsByAssociation = async (associationLabel) => {
       cotisation: {
         association_label: associationLabel,
       },
-      devise: "usd",
+      devise: "USD",
     },
     _sum: {
       montant: true,
@@ -1780,7 +1821,7 @@ const getStatsByAssociation = async (associationLabel) => {
       cotisation: {
         association_label: associationLabel,
       },
-      devise: "cfd",
+      devise: "CDF",
     },
     _sum: {
       montant: true,
@@ -1790,8 +1831,8 @@ const getStatsByAssociation = async (associationLabel) => {
   return {
     totalDrivers,
     totalMoney: {
-      USD: totalMoneyUSD._sum.montant,
-      CDF: totalMoneyCDF._sum.montant,
+      USD: totalMoneyUSD._sum.montant || 0,
+      CDF: totalMoneyCDF._sum.montant || 0,
     },
   }
 }
