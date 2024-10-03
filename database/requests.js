@@ -386,6 +386,18 @@ const removeAssociationNotif = async (association_id, notif_id) => {
 
 const createContribution = async (datas) => {
   try {
+    const existingAssociation = await prisma.association.findUnique({
+      where: {
+        nom: datas.association,
+      },
+    })
+
+    if (!existingAssociation) {
+      return {
+        success: false,
+        message: "Association does not exist",
+      }
+    }
     // Check if the contribution already exists
     const existingContribution = await prisma.cotisation.findFirst({
       where: {
@@ -400,7 +412,11 @@ const createContribution = async (datas) => {
 
     if (existingContribution) {
       // Contribution already exists, return an error
-      throw new Error("Contribution already exists")
+      return {
+        success: false,
+        message: "Contribution already exists",
+        contributionId: existingContribution.id, // Optionally include existing contribution ID
+      }
     }
     await prisma.cotisation.create({
       data: {
@@ -417,10 +433,17 @@ const createContribution = async (datas) => {
         },
       },
     })
-    return true
+    return {
+      success: true,
+      message: "Contribution created successfully",
+    }
   } catch (error) {
     console.error(error)
-    return false
+    return {
+      success: false,
+      message: "An error occurred while creating the contribution",
+      error: error.message, // Include the error message for debugging
+    }
   }
 }
 const retrieveContributions = async (association_id, query) => {
