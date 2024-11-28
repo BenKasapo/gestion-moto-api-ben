@@ -11,13 +11,23 @@ const {
     removeUserProfile,
  } = require("../database/requests")
 
-const addUser = async (req, res) => {
+/* const addUser = async (req, res) => {
     if (!await createUser(req.body)) {
         res.status(500).send("Cannot create user");
     } else {
         res.status(201).send("User added");
     }
-}
+} */
+const addUser = async (req, res) => {
+const response = await createUser(req.body); // Call createUser and get the response
+    
+    if (!response.success) {
+        res.status(500).send(response.message); // Send the error message from createUser
+        } else {
+            res.status(201).send(response.message); // Send the success message from createUser
+        }
+};
+
 const getUsers = async (req, res) => {
     let users;
     if (req.query) {

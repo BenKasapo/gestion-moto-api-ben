@@ -1152,7 +1152,7 @@ const removeProgram = async (program_label) => {
 
 // Users requests handlers
 
-const createUser = async (datas) => {
+/* const createUser = async (datas) => {
   try {
     const hashedPassword = bcrypt.hashSync(datas.password, 15)
 
@@ -1184,7 +1184,54 @@ const createUser = async (datas) => {
     console.error(error)
     return false
   }
-}
+} */
+
+  const createUser = async (datas) => {
+    try {
+      // Check if the email already exists
+      const existingUser = await prisma.utilisateur.findUnique({
+        where: {
+          email: datas.email, // Assuming 'email' is the field in your database
+        },
+      });
+  
+      if (existingUser) {
+        // Email already exists
+        return { success: false, message: "Email already in use. Please use another Email" };
+      }
+  
+      // If email does not exist, proceed with user creation
+      const hashedPassword = bcrypt.hashSync(datas.password, 15);
+  
+      const userData = {
+        ...datas,
+        date_naissance: new Date(datas.date_naissance),
+        password: hashedPassword,
+        profil: {
+          connect: {
+            label: datas.profil,
+          },
+        },
+      };
+  
+      if (datas.association) {
+        userData.association = {
+          connect: {
+            nom: datas.association,
+          },
+        };
+      }
+  
+      await prisma.utilisateur.create({
+        data: userData,
+      });
+  
+      return { success: true, message: "User created successfully." }; // Return success message
+    } catch (error) {
+      console.error(error);
+      return { success: false, message: "An error occurred while creating the user." }; // Return error message
+    }
+  };
 const retrieveUsers = async (query) => {
   const page = parseInt(query.page)
   const limit = parseInt(query.limit)
