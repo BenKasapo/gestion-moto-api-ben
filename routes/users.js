@@ -5,12 +5,15 @@ const {
     getUser,
     updateUser,
     deleteUser
- } = require('../controllers/users');
+} = require('../controllers/users');
+
+const { userValidationRules } = require('../middlewares/validationMiddleware');
+
 const router = express.Router()
 
 router.route("/")
 .get(getUsers)
-.post(addUser)
+.post(userValidationRules,addUser)
 
 router.route("/:id")
 .get(getUser)

@@ -19,7 +19,11 @@ const {
     }
 } */
 const addUser = async (req, res) => {
-const response = await createUser(req.body); // Call createUser and get the response
+    /* const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    } */
+    const response = await createUser(req.body); // Call createUser and get the response
     
     if (!response.success) {
         res.status(500).send(response.message); // Send the error message from createUser

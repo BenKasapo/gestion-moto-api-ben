@@ -1,5 +1,6 @@
 const { PrismaClient } = require("@prisma/client")
 const bcrypt = require("bcrypt")
+const generateUniqueCode = require('../services/generateUniqueCode');
 
 const prisma = new PrismaClient()
 
@@ -1187,40 +1188,109 @@ const removeProgram = async (program_label) => {
 } */
 
   const createUser = async (datas) => {
+    const {
+      firstname,
+      lastname,
+      gender,
+      phone1,
+      phone2,
+      street,
+      city,
+      postalCode,
+      country,
+      state,
+      use,
+      username,
+      password,
+      businessProfile,
+      biometrics,
+    } = datas;
     try {
-      // Check if the email already exists
-      const existingUser = await prisma.utilisateur.findUnique({
+      // Check if the email or username already exists
+      const existingUser = await prisma.utilisateur.findFirst({
         where: {
-          email: datas.email, // Assuming 'email' is the field in your database
+          OR: [
+            { email: datas.email },
+            { username: datas.username },
+          ],
         },
       });
-  
+
       if (existingUser) {
-        // Email already exists
-        return { success: false, message: "Email already in use. Please use another Email" };
+        // Determine which field is already in use
+        const message =
+          existingUser.email === datas.email
+            ? "Email already in use. Please use another email."
+            : "Username already in use. Please use another username.";
+        return { success: false, message };
       }
+
+      const uniqueCode = await generateUniqueCode();
   
       // If email does not exist, proceed with user creation
       const hashedPassword = bcrypt.hashSync(datas.password, 15);
-  
-      const userData = {
-        ...datas,
-        date_naissance: new Date(datas.date_naissance),
+
+      if (datas.use === 'individual' && datas.businessProfile) {
+        return { success: false, message: 'Business profile should not be provided for individual use.' };
+    }
+    
+    const userData = {
+        firstname: datas.firstname,
+        lastname: datas.lastname,
+        email: datas.email,
+        username: datas.username,
         password: hashedPassword,
-        profil: {
-          connect: {
-            label: datas.profil,
-          },
-        },
-      };
-  
-      if (datas.association) {
-        userData.association = {
-          connect: {
-            nom: datas.association,
-          },
-        };
+        phone1: datas.phone1,
+        phone2: datas.phone2,
+        gender: datas.gender,
+        street: datas.street,
+        city: datas.city,
+        postalCode: datas.postalCode,
+        country: datas.country,
+        state: datas.state,
+        use: datas.use,
+        code: uniqueCode,
+        business: datas.use === 'business' ? {
+            create: {
+                ...datas.businessProfile,
+            },
+        } : undefined,
+        biometrics: datas.use != 'admin' 
+        ? datas.biometrics
+          ? {
+              create: {
+                face_data: { 
+                  create: { 
+                    ...datas.biometrics.face_data 
+                  } 
+                },
+                fingers_data: { 
+                  createMany: { 
+                    data: datas.biometrics.fingers_data 
+                  } 
+                },
+              },
+            }
+          : undefined
+        : undefined
       }
+
+    if(datas.profil){
+        userData.profil = {
+            connect: {
+                label: datas.profil,
+            },
+        };
+    }
+    
+    if (datas.association) {
+        userData.association = {
+            connect: {
+                nom: datas.association,
+            },
+        };
+    }
+    
   
       await prisma.utilisateur.create({
         data: userData,
@@ -1232,72 +1302,144 @@ const removeProgram = async (program_label) => {
       return { success: false, message: "An error occurred while creating the user." }; // Return error message
     }
   };
-const retrieveUsers = async (query) => {
-  const page = parseInt(query.page)
-  const limit = parseInt(query.limit)
-  const profile = query.profile
-  try {
-    let users
-    if (profile && page && limit) {
-      users = await prisma.utilisateur.findMany({
-        where: {
-          profil_label: profile,
-        },
-        skip: (page - 1) * limit,
-        take: limit,
-      })
-      return users
-    } else if (profile) {
-      users = await prisma.utilisateur.findMany({
-        where: {
-          profil_label: profile,
-        },
-      })
-      return users
-    } else if (page && limit) {
-      users = await prisma.utilisateur.findMany({
-        skip: (page - 1) * limit,
-        take: limit,
-      })
-      return users
+  
+  const retrieveUsers = async (query) => {
+    const page = parseInt(query.page);
+    const limit = parseInt(query.limit);
+    const profile = query.profile;
+  
+    try {
+      let users;
+  
+      if (profile && page && limit) {
+        users = await prisma.utilisateur.findMany({
+          where: {
+            profil_label: profile,
+          },
+          skip: (page - 1) * limit,
+          take: limit,
+        });
+      } else if (profile) {
+        users = await prisma.utilisateur.findMany({
+          where: {
+            profil_label: profile,
+          },
+          include: {
+            business: true,
+            biometrics: {
+              include: {
+                face_data: true,
+                fingers_data: true,
+              },
+            },
+          },
+        });
+      } else if (page && limit) {
+        users = await prisma.utilisateur.findMany({
+          skip: (page - 1) * limit,
+          take: limit,
+          include: {
+            business: true,
+            biometrics: {
+              include: {
+                face_data: true,
+                fingers_data: true,
+              },
+            },
+          },
+        });
+      } else {
+        users = await prisma.utilisateur.findMany({
+          include: {
+            business: true,
+            biometrics: {
+              include: {
+                face_data: true,
+                fingers_data: true,
+              },
+            },
+          },
+        });
+      }
+  
+      return users;
+    } catch (error) {
+      console.error(error);
     }
-    users = await prisma.utilisateur.findMany()
-    return users
-  } catch (error) {
-    console.error(error)
-  }
-}
-const retrieveUser = async (user_id) => {
+  };
+  
+/* const retrieveUser = async (user_id) => {
   try {
     const user = await prisma.utilisateur.findUnique({
       where: {
         id: user_id,
       },
+      include: {
+        id:true,
+        business: true,
+        biometrics: {
+          include: {
+            face_data: true,
+            fingers_data: true,
+          },
+        },
+      },
+    });
+    return user;
+  } catch (error) {
+    console.error("Error retrieving user:", error);
+  }
+}; */
+const retrieveUser = async (user_id) => {
+  try {
+    // First query: Fetch specific fields
+    const userFields = await prisma.utilisateur.findUnique({
+      where: {
+        id: user_id,
+      },
       select: {
         id: true,
-        nom: true,
-        prenom: true,
-        postnom: true,
         email: true,
-        phone1: true,
-        phone2: true,
-        association_label: true,
-        profil_label: true,
-        date_naissance: true,
-        lieu_naissance: true,
+        username: true,
+        // Include other specific fields
       },
-    })
-    return user
+    });
+
+    // Second query: Fetch related data
+    const userRelatedData = await prisma.utilisateur.findUnique({
+      where: {
+        id: user_id,
+      },
+      include: {
+        business: true,
+        biometrics: {
+          include: {
+            face_data: true,
+            fingers_data: true,
+          },
+        },
+      },
+    });
+
+    // Combine the data from both queries
+    const userData = {
+      ...userFields,
+      ...userRelatedData,
+    };
+
+    return userData;
   } catch (error) {
-    console.error(error)
+    console.error("Error retrieving user:", error);
   }
-}
+};
 
 const getUsersByAssociation = async (association) => {
   try {
     return await prisma.utilisateur.findMany({
       where: {
         association_label: association,
+        include: { business: true, biometrics: { include: { face_data: true, fingers_data: true } } },
+
       },
     })
   } catch (error) {
@@ -1306,7 +1448,580 @@ const getUsersByAssociation = async (association) => {
   }
 }
 
+/* const changeUser = async (user_id, datas) => {
+  const {
+    email,
+    username,
+    name,
+    phone1,
+    phone2,
+    password,
+    street,
+    city,
+    postalCode,
+    country,
+    state,
+    use,
+    business,
+    biometrics,
+    profil,
+    association,
+  } = datas;
+  
+  try {
+    await prisma.utilisateur.update({
+      where: {
+        id: user_id,
+      },
+      data: {
+        email,
+        username,
+        name,
+        phone1,
+        phone2,
+        password,
+        street,
+        city,
+        postalCode,
+        country,
+        state,
+        use,
+        business: business
+          ? {
+              upsert: {
+                create: {
+                  activityName: business.activityName,
+                  registration: business.registration,
+                  sector: business.sector,
+                  activitySize: business.activitySize,
+                  businessPhone1: business.businessPhone1,
+                  businessStreet: business.businessStreet,
+                  businessCountry: business.businessCountry,
+                  businessState: business.businessState,
+                  businessCity: business.businessCity,
+                  merchantCode: business.merchantCode,
+                },
+                update: {
+                  activityName: business.activityName,
+                  registration: business.registration,
+                  sector: business.sector,
+                  activitySize: business.activitySize,
+                  businessPhone1: business.businessPhone1,
+                  businessStreet: business.businessStreet,
+                  businessCountry: business.businessCountry,
+                  businessState: business.businessState,
+                  businessCity: business.businessCity,
+                  merchantCode: business.merchantCode,
+                },
+              },
+            }
+          : undefined,
+          biometrics: biometrics
+          ? {
+              upsert: {
+                create: {
+                  face_data: { 
+                    create: {
+                      pos: biometrics.face_data?.pos, 
+                      data: biometrics.face_data?.data,
+                    },
+                  },
+                  fingers_data: { 
+                    create: biometrics.fingers_data?.map((finger) => ({
+                      pos: finger.pos,
+                      data: finger.data,
+                    })) || [],
+                  },
+                },
+                update: {
+                  face_data: { 
+                    update: {
+                      pos: biometrics.face_data?.pos, 
+                      data: biometrics.face_data?.data,
+                    },
+                  },
+                  fingers_data: { 
+                    deleteMany: {},
+                    create: biometrics.fingers_data?.map((finger) => ({
+                      pos: finger.pos,
+                      data: finger.data,
+                    })) || [], 
+                  },
+                },
+              },
+            }
+          : undefined,
+        // Profil update
+        profil: profil
+          ? {
+              upsert: {
+                create: {
+                  label: profil,
+                },
+                update: {
+                  label: profil,
+                },
+              },
+            }
+          : undefined,
+        // Association update
+        association: association
+          ? {
+              upsert: {
+                create: {
+                  nom: association,
+                },
+                update: {
+                  nom: association,
+                },
+              },
+            }
+          : undefined,
+      },
+    });
+  
+   return true
+  } catch (error) {
+    console.error("Error updating user:", error);
+    return false
+  }
+  
+}; */
+/* const changeUser = async (user_id, datas) => {
+  const {
+    email,
+    username,
+    name,
+    phone1,
+    phone2,
+    password,
+    street,
+    city,
+    postalCode,
+    country,
+    state,
+    use,
+    business,
+    biometrics,
+    profil,
+    association,
+  } = datas;
+  
+  try {
+    await prisma.utilisateur.update({
+      where: {
+        id: user_id,
+      },
+      data: {
+        email,
+        username,
+        name,
+        phone1,
+        phone2,
+        password,
+        street,
+        city,
+        postalCode,
+        country,
+        state,
+        use,
+        business: business
+          ? {
+              update: {
+                activityName: business.activityName,
+                registration: business.registration,
+                sector: business.sector,
+                activitySize: business.activitySize,
+                businessPhone1: business.businessPhone1,
+                businessStreet: business.businessStreet,
+                businessCountry: business.businessCountry,
+                businessState: business.businessState,
+                businessCity: business.businessCity,
+                merchantCode: business.merchantCode,
+              }
+            }
+          : undefined,
+        biometrics: biometrics
+          ? {
+              update: {
+                face_data: {
+                  update: {
+                    pos: biometrics.face_data?.pos, 
+                    data: biometrics.face_data?.data,
+                  }
+                },
+                fingers_data: {
+                  deleteMany: {},
+                  create: biometrics.fingers_data?.map((finger) => ({
+                    pos: finger.pos,
+                    data: finger.data,
+                  })) || []
+                }
+              }
+            }
+          : undefined,
+        profil: profil
+          ? {
+              update: {
+                label: profil,
+              }
+            }
+          : undefined,
+        association: association
+          ? {
+              update: {
+                nom: association,
+              }
+            }
+          : undefined,
+      },
+    });
+  
+    return true;
+  } catch (error) {
+    console.error("Error updating user:", error); 
+    if (error.code === 'P2002') {
+       // Prisma unique constraint violation error 
+       console.error('Unique constraint violation:', error.meta); 
+    } 
+    else if (error.code === 'P2025') { 
+      // Record to update not found error
+      console.error('Record not found-----------------------------------:', error.meta); } 
+      else { console.error('Unknown error:', error); 
+    }
+    return false;
+  }
+}; */
+/* const changeUser = async (user_id, datas) => {
+  const {
+    email,
+    username,
+    name,
+    phone1,
+    phone2,
+    password,
+    street,
+    city,
+    postalCode,
+    country,
+    state,
+    use,
+    business,
+    biometrics,
+    profil,
+    association,
+  } = datas;
+
+  // Build the data object dynamically
+  const updateData = {};
+
+  // Only add fields to updateData if they exist in datas
+  if (email) updateData.email = email;
+  if (username) updateData.username = username;
+  if (name) updateData.name = name;
+  if (phone1) updateData.phone1 = phone1;
+  if (phone2) updateData.phone2 = phone2;
+  if (password) updateData.password = password;
+  if (street) updateData.street = street;
+  if (city) updateData.city = city;
+  if (postalCode) updateData.postalCode = postalCode;
+  if (country) updateData.country = country;
+  if (state) updateData.state = state;
+  if (use) updateData.use = use;
+
+  if (business) {
+    updateData.business = {
+      update: {
+        activityName: business.activityName,
+        registration: business.registration,
+        sector: business.sector,
+        activitySize: business.activitySize,
+        businessPhone1: business.businessPhone1,
+        businessStreet: business.businessStreet,
+        businessCountry: business.businessCountry,
+        businessState: business.businessState,
+        businessCity: business.businessCity,
+        merchantCode: business.merchantCode,
+      }
+    };
+  }
+
+  if (biometrics) {
+    updateData.biometrics = {
+      update: {
+        face_data: {
+          update: {
+            pos: biometrics.face_data?.pos, 
+            data: biometrics.face_data?.data,
+          }
+        },
+        fingers_data: {
+          deleteMany: {},
+          create: biometrics.fingers_data?.map((finger) => ({
+            pos: finger.pos,
+            data: finger.data,
+          })) || []
+        }
+      }
+    };
+  }
+
+  if (profil) {
+    updateData.profil = {
+      update: {
+        label: profil,
+      }
+    };
+  }
+
+  if (association) {
+    updateData.association = {
+      update: {
+        nom: association,
+      }
+    };
+  }
+
+  try {
+    await prisma.utilisateur.update({
+      where: {
+        id: user_id,
+      },
+      data: updateData,
+    });
+
+    return true;
+  } catch (error) {
+    console.error("Error updating user:", error);
+    return false;
+  }
+}; */
+/* const changeUser = async (user_id, datas) => {
+  const {
+    email,
+    username,
+    name,
+    phone1,
+    phone2,
+    password,
+    street,
+    city,
+    postalCode,
+    country,
+    state,
+    use,
+    business,
+    biometrics,
+    profil,
+    association,
+  } = datas;
+
+  // Build the data object dynamically
+  const updateData = {};
+
+  // Only add fields to updateData if they exist in datas
+  if (email) updateData.email = email;
+  if (username) updateData.username = username;
+  if (name) updateData.name = name;
+  if (phone1) updateData.phone1 = phone1;
+  if (phone2) updateData.phone2 = phone2;
+  if (password) updateData.password = password;
+  if (street) updateData.street = street;
+  if (city) updateData.city = city;
+  if (postalCode) updateData.postalCode = postalCode;
+  if (country) updateData.country = country;
+  if (state) updateData.state = state;
+  if (use) updateData.use = use;
+
+  if (business) {
+    updateData.business = {
+      update: {
+        activityName: business.activityName,
+        registration: business.registration,
+        sector: business.sector,
+        activitySize: business.activitySize,
+        businessPhone1: business.businessPhone1,
+        businessStreet: business.businessStreet,
+        businessCountry: business.businessCountry,
+        businessState: business.businessState,
+        businessCity: business.businessCity,
+        merchantCode: business.merchantCode,
+      }
+    };
+  }
+
+  if (biometrics) {
+    updateData.biometrics = {
+      update: {
+        face_data: {
+          update: {
+            pos: biometrics.face_data?.pos,
+            data: biometrics.face_data?.data,
+          }
+        },
+        fingers_data: {
+          deleteMany: {},
+          create: biometrics.fingers_data?.map((finger) => ({
+            pos: finger.pos,
+            data: finger.data,
+          })) || []
+        }
+      }
+    };
+  }
+
+  // Add profil if it doesn't exist
+  if (profil) {
+    updateData.profil = {
+      connectOrCreate: {
+        where: {
+          label: profil,
+        },
+        create: {
+          label: profil,
+        }
+      }
+    };
+  }
+
+  // Add association if it doesn't exist
+  if (association) {
+    updateData.association = {
+      connectOrCreate: {
+        where: {
+          nom: association,
+        },
+        create: {
+          nom: association,
+        }
+      }
+    };
+  }
+
+  try {
+    await prisma.utilisateur.update({
+      where: {
+        id: user_id,
+      },
+      data: updateData,
+    });
+
+    return true;
+  } catch (error) {
+    console.error("Error updating user:", error);
+    return false;
+  }
+}; */
 const changeUser = async (user_id, datas) => {
+  const {
+    email,
+    username,
+    name,
+    phone1,
+    phone2,
+    password,
+    street,
+    city,
+    postalCode,
+    country,
+    state,
+    use,
+    business,
+    biometrics,
+    profil,
+    association,
+  } = datas;
+
+  // Build the data object dynamically
+  const updateData = {};
+
+  // Only add fields to updateData if they exist in datas
+  if (email) updateData.email = email;
+  if (username) updateData.username = username;
+  if (name) updateData.name = name;
+  if (phone1) updateData.phone1 = phone1;
+  if (phone2) updateData.phone2 = phone2;
+  if (password) updateData.password = password;
+  if (street) updateData.street = street;
+  if (city) updateData.city = city;
+  if (postalCode) updateData.postalCode = postalCode;
+  if (country) updateData.country = country;
+  if (state) updateData.state = state;
+  if (use) updateData.use = use;
+
+  if (business) {
+    updateData.business = {
+      update: {
+        activityName: business.activityName,
+        registration: business.registration,
+        sector: business.sector,
+        activitySize: business.activitySize,
+        businessPhone1: business.businessPhone1,
+        businessStreet: business.businessStreet,
+        businessCountry: business.businessCountry,
+        businessState: business.businessState,
+        businessCity: business.businessCity,
+        merchantCode: business.merchantCode,
+      },
+    };
+  }
+
+  if (biometrics) {
+    updateData.biometrics = {
+      update: {
+        face_data: {
+          update: {
+            pos: biometrics.face_data?.pos,
+            data: biometrics.face_data?.data,
+          },
+        },
+        fingers_data: {
+          deleteMany: {},
+          create: biometrics.fingers_data?.map((finger) => ({
+            pos: finger.pos,
+            data: finger.data,
+          })) || [],
+        },
+      },
+    };
+  }
+
+  // Connect to existing profil if it exists
+  if (profil) {
+    updateData.profil = {
+      connect: {
+        label: profil,
+      },
+    };
+  }
+
+  // Connect to existing association if it exists
+  if (association) {
+    updateData.association = {
+      connect: {
+        nom: association,
+      },
+    };
+  }
+
+  try {
+    await prisma.utilisateur.update({
+      where: {
+        id: user_id,
+      },
+      data: updateData,
+    });
+
+    return true;
+  } catch (error) {
+    console.error("Error updating user:", error);
+    return false;
+  }
+};
+
+
+
+/* const changeUser = async (user_id, datas) => {
   try {
     await prisma.utilisateur.update({
       where: {
@@ -1314,26 +2029,23 @@ const changeUser = async (user_id, datas) => {
       },
       data: {
         //...datas,
-        nom: datas.nom,
-        prenom: datas.prenom,
-        postnom: datas.postnom,
         email: datas.email,
-        password: datas.password,
+        username: datas.username,
+        name: datas.name,
         phone1: datas.phone1,
         phone2: datas.phone2,
-        lieu_naissance: datas.lieu_naissance,
-        date_naissance: datas.date_naissance,
-        profil: {
-          connect: {
-            label: datas.profil,
-          },
-        },
-        date_naissance: new Date(datas.date_naissance),
-        association: {
-          connect: {
-            nom: datas.association,
-          },
-        },
+        password: datas.password,
+        street: datas.street,
+        city: datas.city,
+        postalCode: datas.postalCode,
+        country: datas.country,
+        state: datas.state,
+        use: datas.use,
+        business: datas.business,
+        biometrics: datas.biometrics,
+        business: datas.business,
+        profil: profil ? { connect: { label: profil } } : null,
+        association: association ? { connect: { nom: association } } : undefined,
       },
     })
     return true
@@ -1341,7 +2053,7 @@ const changeUser = async (user_id, datas) => {
     console.error(error)
     return false
   }
-}
+} */
 const removeUser = async (user_id) => {
   try {
     await prisma.utilisateur.delete({

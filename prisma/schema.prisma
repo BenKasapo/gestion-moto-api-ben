@@ -51,6 +51,7 @@ model Vehicule{
   // Relation fields
   proprietaire Utilisateur @relation(references: [id], fields: [utilisateur_id])
   utilisateur_id String
+
 }
 
 
@@ -79,6 +80,7 @@ model Paiement{
   cotisation_label String
   utilisateur Utilisateur @relation(references: [id], fields: [utilisateur_id])
   utilisateur_id String
+
   periode_id Int
   periode    Periode @relation(fields: [periode_id], references: [id])
   association_label  String?            
@@ -108,6 +110,7 @@ model Profil_Utilisateur{
   label String @unique
   // Relation fields
   utilisateur Utilisateur[]
+
   permissions Permission[]
 }
 
@@ -135,29 +138,87 @@ model Type_Cotisation{
   cotisations Cotisation[]
 }
 
-model Utilisateur{
-  id String @id @default(uuid())
-  nom String
-  prenom String
-  postnom String
-  email String? @unique
-  password String
-  phone1 String
-  phone2 String?
-  lieu_naissance String
-  date_naissance DateTime @db.Date
-  // Relation fields
-  association Association? @relation(references: [nom], fields: [association_label])
-  association_label String?
-  profil Profil_Utilisateur @relation(references: [label], fields: [profil_label])
-  profil_label String
-  paiements Paiement[]
-  vehicule Vehicule[]
-
-}
 enum PaymentStatus {
   PENDING
   PAID
   FAILED
   REFUNDED
+}
+
+
+model Utilisateur {
+  id          String    @id @default(uuid())
+  firstname   String
+  lastname    String
+  gender      String    // "H" or "F"
+  email       String    @unique
+  phone1      String
+  phone2      String
+  street      String
+  city        String
+  postalCode  String
+  country     String
+  state       String
+  use         String    // "individual" or "business"
+  username    String    @unique
+  password    String
+  code        String    @unique //unique code field
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  // Relation fields
+  association Association? @relation(references: [nom], fields: [association_label])
+  association_label String?
+  profil Profil_Utilisateur? @relation(references: [label], fields: [profil_label])
+  profil_label String?
+  paiements Paiement[]
+  vehicule Vehicule[]
+  business    BusinessProfile? // One-to-one relation
+  biometrics   Biometrics? // One-to-one relation with the biometric model
+
+}
+
+model BusinessProfile {
+  id             Int       @id @default(autoincrement())
+  activityName   String?
+  registration   String?
+  sector         String?
+  activitySize   String?
+  businessPhone1 String?
+  businessPhone2 String?
+  businessStreet String?
+  businessCountry String?
+  businessState  String?
+  businessCity   String?
+  merchantCode   String?
+  userId         String       @unique
+  user           Utilisateur      @relation(fields: [userId], references: [id])
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+
+model Biometrics {
+  id          Int         @id @default(autoincrement())
+  userId      String         @unique
+  user        Utilisateur        @relation(fields: [userId], references: [id])
+  face_data    FaceData?
+  fingers_data  FingerData[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model FaceData {
+  id           Int        @id @default(autoincrement())
+  biometricId  Int        @unique
+  biometrics    Biometrics  @relation(fields: [biometricId], references: [id])
+  pos          String     // E.g., "UP", "FRONT"
+  data         String     // Base64-encoded face data
+}
+
+model FingerData {
+  id           Int        @id @default(autoincrement())
+  biometricId  Int
+  biometrics    Biometrics  @relation(fields: [biometricId], references: [id])
+  pos          Int        // Finger position (e.g., 1 for thumb, 2 for index)
+  data         String     // Base64-encoded fingerprint data
 }
