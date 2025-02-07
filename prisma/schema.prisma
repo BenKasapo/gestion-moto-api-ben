@@ -146,71 +146,82 @@ enum PaymentStatus {
 }
 
 
+
 model Utilisateur {
   id          String    @id @default(uuid())
-  firstname   String
-  lastname    String
-  gender      String    // "H" or "F"
-  email       String    @unique
-  phone1      String
-  phone2      String
-  street      String
-  city        String
-  postalCode  String
-  country     String
-  state       String
-  use         String    // "individual" or "business"
-  username    String    @unique
-  password    String
-  code        String    @unique //unique code field
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  // Relation fields
+  
+  // Personal Information
+  personalInfos PersonalInfos? 
+
+  // Address Information
+  address Address? 
+
+  // Account Information
+  account Account? 
+
+  // Biometrics Information
+  biometrics BiometricData?
+  
+    // Relation fields
   association Association? @relation(references: [nom], fields: [association_label])
   association_label String?
   profil Profil_Utilisateur? @relation(references: [label], fields: [profil_label])
   profil_label String?
   paiements Paiement[]
   vehicule Vehicule[]
-  business    BusinessProfile? // One-to-one relation
-  biometrics   Biometrics? // One-to-one relation with the biometric model
 
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
-model BusinessProfile {
-  id             Int       @id @default(autoincrement())
-  activityName   String?
-  registration   String?
-  sector         String?
-  activitySize   String?
-  businessPhone1 String?
-  businessPhone2 String?
-  businessStreet String?
-  businessCountry String?
-  businessState  String?
-  businessCity   String?
-  merchantCode   String?
-  userId         String       @unique
-  user           Utilisateur      @relation(fields: [userId], references: [id])
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-}
-
-
-model Biometrics {
+model PersonalInfos {
   id          Int         @id @default(autoincrement())
-  userId      String         @unique
-  user        Utilisateur        @relation(fields: [userId], references: [id])
-  face_data    FaceData?
-  fingers_data  FingerData[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  user       Utilisateur @relation(fields: [userId], references: [id])
+  userId     String @unique
+  
+  association String?
+  firstname  String
+  lastname   String
+  gender     String  // "H" or "F"
+  phone1     String
+  phone2     String?
+}
+
+model Address {
+  id          Int         @id @default(autoincrement())
+  user       Utilisateur @relation(fields: [userId], references: [id])
+  userId     String @unique
+
+  street     String
+  city       String
+  postalCode String
+  country    String
+  state      String
+}
+
+model Account {
+  id          Int         @id @default(autoincrement())
+  user       Utilisateur @relation(fields: [userId], references: [id])
+  userId     String @unique
+
+  merchantCode String? @unique
+  username     String  @unique
+  password     String
+}
+
+model BiometricData {
+  id          Int         @id @default(autoincrement())
+  user      Utilisateur @relation(fields: [userId], references: [id])
+  userId    String @unique
+
+  faceData  FaceData?
+  fingers   FingerData[]
 }
 
 model FaceData {
   id           Int        @id @default(autoincrement())
   biometricId  Int        @unique
-  biometrics    Biometrics  @relation(fields: [biometricId], references: [id])
+  biometrics    BiometricData  @relation(fields: [biometricId], references: [id])
   pos          String     // E.g., "UP", "FRONT"
   data         String     // Base64-encoded face data
 }
@@ -218,7 +229,10 @@ model FaceData {
 model FingerData {
   id           Int        @id @default(autoincrement())
   biometricId  Int
-  biometrics    Biometrics  @relation(fields: [biometricId], references: [id])
+  biometrics    BiometricData  @relation(fields: [biometricId], references: [id])
   pos          Int        // Finger position (e.g., 1 for thumb, 2 for index)
   data         String     // Base64-encoded fingerprint data
 }
+
+
+

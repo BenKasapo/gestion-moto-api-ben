@@ -1153,41 +1153,8 @@ const removeProgram = async (program_label) => {
 
 // Users requests handlers
 
-/* const createUser = async (datas) => {
-  try {
-    const hashedPassword = bcrypt.hashSync(datas.password, 15)
 
-    const userData = {
-      ...datas,
-      date_naissance: new Date(datas.date_naissance),
-      password: hashedPassword,
-      profil: {
-        connect: {
-          label: datas.profil,
-        },
-      },
-    }
-
-    if (datas.association) {
-      userData.association = {
-        connect: {
-          nom: datas.association,
-        },
-      }
-    }
-
-    await prisma.utilisateur.create({
-      data: userData,
-    })
-
-    return true
-  } catch (error) {
-    console.error(error)
-    return false
-  }
-} */
-
-  const createUser = async (datas) => {
+  /* const createUser = async (datas) => {
     const {
       firstname,
       lastname,
@@ -1302,7 +1269,294 @@ const removeProgram = async (program_label) => {
       return { success: false, message: "An error occurred while creating the user." }; // Return error message
     }
   };
+   */
   
+
+ /*  const createUser = async ({
+    firstname,
+    lastname,
+    gender,
+    phone1,
+    phone2,
+    street,
+    city,
+    postalCode,
+    country,
+    state,
+    username,
+    password,
+    merchantCode,
+    profil,
+    association,
+    biometrics,
+  }) => {
+    console.log("Received data:", {
+      firstname,
+      lastname,
+      gender,
+      phone1,
+      phone2,
+      street,
+      city,
+      postalCode,
+      country,
+      state,
+      username,
+      merchantCode,
+      profil,
+      association,
+      biometrics,
+    });
+  
+    try {
+      // Check if the phone1 or username already exists
+      const existingUser = await prisma.utilisateur.findFirst({
+        where: {
+          OR: [
+            { phone1 },
+            { username },
+          ],
+        },
+      });
+  
+      console.log("Existing user:", existingUser);
+      if (existingUser) {
+        const message = existingUser.phone1 === phone1
+          ? "Phone already in use. Please use another phone."
+          : "Username already in use. Please use another username.";
+        return { success: false, message };
+      }
+  
+      // Prepare user data for creation
+      const userData = {
+        personalInfos: {
+          create: {
+            firstname,
+            lastname,
+            gender,
+            phone1,
+            phone2: phone2 || null,
+          },
+        },
+        address: {
+          create: {
+            street,
+            city,
+            postalCode,
+            country,
+            state,
+          },
+        },
+        account: {
+          create: {
+            username,
+            password,
+            merchantCode,
+          },
+        },
+      };
+  
+      // Handle profile association
+      if (profil) {
+        userData.profil = {
+          connect: { label: profil },
+        };
+      }
+  
+      // Handle association
+      if (association) {
+        userData.association = {
+          connect: { nom: association },
+        };
+      }
+  
+      // Handle biometric data
+      if (biometrics) {
+        userData.biometrics = {
+          create: {
+            faceData: biometrics.faceData
+              ? {
+                  create: {
+                    pos: biometrics.faceData.pos,
+                    data: biometrics.faceData.data,
+                  },
+                }
+              : undefined,
+            fingers: biometrics.fingers_data
+              ? {
+                  createMany: {
+                    data: biometrics.fingers_data.map((finger) => ({
+                      pos: finger.pos,
+                      data: finger.data,
+                    })),
+                  },
+                }
+              : undefined,
+          },
+        };
+      }
+  
+      console.log("User data to be created:", userData);
+  
+      await prisma.utilisateur.create({
+        data: userData,
+      });
+  
+      return { success: true, message: "User created successfully." };
+    } catch (error) {
+      console.error(error);
+      return { success: false, message: "An error occurred while creating the user." };
+    }
+  };
+   */
+
+  const createUser = async (input) => {
+    // Log the entire input object for debugging
+    console.log("Received input object:", input);
+  
+    // Destructure the input object with correct field names
+    const {
+      'personal-infos': {
+        firstname,
+        lastname,
+        gender,
+        phone1,
+        phone2,
+      },
+      address: {
+        street,
+        city,
+        postalCode,
+        country,
+        state,
+      },
+      account: {
+        merchantCode,
+        username,
+        password,
+      },
+      biometrics,
+      profil,
+      association
+    } = input;
+  
+    // Validate required fields
+    if (!firstname || !lastname || !phone1 || !username || !password) {
+      console.log("Missing required fields, returning error message.", firstname, lastname, phone1, username, password);
+      return { success: false, message: "Missing required fields." };
+    }
+  
+    try {
+      // Check if the phone1 or username already exists
+      const existingUser = await prisma.utilisateur.findFirst({
+        where: {
+          OR: [
+            {
+              personalInfos: {
+                phone1: phone1,
+              },
+            },
+            {
+              account: {
+                username: username,
+              },
+            },
+          ],
+        },
+      });
+  
+      if (existingUser) {
+        const message = existingUser.personalInfos?.phone1 === phone1
+          ? "Phone already in use. Please use another phone."
+          : "Username already in use. Please use another username.";
+        return { success: false, message };
+      }
+  
+      // Prepare user data for creation
+      const userData = {
+        personalInfos: {
+          create: {
+            firstname,
+            lastname,
+            gender,
+            phone1,
+            phone2: phone2 || null,
+          },
+        },
+        address: {
+          create: {
+            street,
+            city,
+            postalCode,
+            country,
+            state,
+          },
+        },
+        account: {
+          create: {
+            username,
+            password,
+            merchantCode,
+          },
+        },
+      };
+  
+      // Handle profile association
+      if (profil) {
+        userData.profil = {
+          connect: { label: profil },
+        };
+      }
+  
+      // Handle association
+      if (association) {
+        userData.association = {
+          connect: { nom: association },
+        };
+      }
+  
+      // Handle biometric data
+      if (biometrics) {
+        userData.biometrics = {
+          create: {
+            faceData: biometrics.face_data
+              ? {
+                  create: {
+                    pos: biometrics.face_data.pos,
+                    data: biometrics.face_data.data,
+                  },
+                }
+              : undefined,
+            fingers: biometrics.fingers
+              ? {
+                  createMany: {
+                    data: biometrics.fingers.map((finger) => ({
+                      pos: finger.pos,
+                      data: finger.data,
+                    })),
+                  },
+                }
+              : undefined,
+          },
+        };
+      }
+  
+      // Log the user data to be created
+      console.log("User data to be created:", userData);
+  
+      // Create the user in the database
+      await prisma.utilisateur.create({
+        data: userData,
+      });
+  
+      return { success: true, message: "User created successfully." };
+    } catch (error) {
+      console.error("Error creating user:", error);
+      return { success: false, message: "An error occurred while creating the user." };
+    }
+  };
+  
+
   const retrieveUsers = async (query) => {
     const page = parseInt(query.page);
     const limit = parseInt(query.limit);
