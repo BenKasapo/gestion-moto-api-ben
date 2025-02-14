@@ -7,10 +7,12 @@ const LocalStrategy = new local.Strategy(
     { usernameField : "identifier", passwordField : "password" },
     async (identifier, password, done) => {
         try {
-            const user = await findUserByMailOrPhone(identifier, identifier);
-            if (!user) {
-                return done(null, false)
+            // Recherche de l'utilisateur par email ou téléphone
+            const user = await findUserByMailOrPhone(identifier);
+            if (!user ) {
+                return done(null, false, { message: "User not found" });
             }
+
             bcrypt.compare(password, user.password, (err, isMatch) => {
                 if (err) {
                     return done(null, false, err);

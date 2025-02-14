@@ -150,21 +150,29 @@ enum PaymentStatus {
 model Utilisateur {
   id          String    @id @default(uuid())
   
-  // Personal Information
-  personalInfos PersonalInfos? 
+  firstname  String
+  lastname   String
+  gender     String  // "H" or "F"
+  phone1     String
+  phone2     String?
+  type        Int? // Identification du type (Admin = 1)
 
-  // Address Information
-  address Address? 
+  street     String
+  city       String
+  postalCode String
+  country    String
+  state      String
 
-  // Account Information
-  account Account? 
+  merchantCode String? @unique  // Exclure `merchantCode` si `Utilisateur.personalInfos.type = 1`
+  username     String  @unique
+  password     String
 
   // Biometrics Information
   biometrics BiometricData?
   
     // Relation fields
-  association Association? @relation(references: [nom], fields: [association_label])
-  association_label String?
+  associationRef Association? @relation(references: [nom], fields: [association])
+  association String?
   profil Profil_Utilisateur? @relation(references: [label], fields: [profil_label])
   profil_label String?
   paiements Paiement[]
@@ -174,40 +182,6 @@ model Utilisateur {
   updatedAt   DateTime  @updatedAt
 }
 
-model PersonalInfos {
-  id          Int         @id @default(autoincrement())
-  user       Utilisateur @relation(fields: [userId], references: [id])
-  userId     String @unique
-  
-  association String?
-  firstname  String
-  lastname   String
-  gender     String  // "H" or "F"
-  phone1     String
-  phone2     String?
-}
-
-model Address {
-  id          Int         @id @default(autoincrement())
-  user       Utilisateur @relation(fields: [userId], references: [id])
-  userId     String @unique
-
-  street     String
-  city       String
-  postalCode String
-  country    String
-  state      String
-}
-
-model Account {
-  id          Int         @id @default(autoincrement())
-  user       Utilisateur @relation(fields: [userId], references: [id])
-  userId     String @unique
-
-  merchantCode String? @unique
-  username     String  @unique
-  password     String
-}
 
 model BiometricData {
   id          Int         @id @default(autoincrement())
@@ -215,7 +189,7 @@ model BiometricData {
   userId    String @unique
 
   faceData  FaceData?
-  fingers   FingerData[]
+  fingers   FingerData[]?
 }
 
 model FaceData {
@@ -223,7 +197,7 @@ model FaceData {
   biometricId  Int        @unique
   biometrics    BiometricData  @relation(fields: [biometricId], references: [id])
   pos          String     // E.g., "UP", "FRONT"
-  data         String     // Base64-encoded face data
+  data         Bytes     // Base64-encoded face data
 }
 
 model FingerData {
@@ -231,7 +205,7 @@ model FingerData {
   biometricId  Int
   biometrics    BiometricData  @relation(fields: [biometricId], references: [id])
   pos          Int        // Finger position (e.g., 1 for thumb, 2 for index)
-  data         String     // Base64-encoded fingerprint data
+  data         Bytes     // Base64-encoded fingerprint data
 }
 
 

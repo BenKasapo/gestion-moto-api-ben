@@ -7,6 +7,7 @@ const authMiddleware = (req, res, next) => {
             return next(err);
         }
         if (!user) {
+            console.error('Incorrect credentials')
             return res.status(401).json({error : 'Incorrect credentials'})
         }
         const token = generateToken(user)

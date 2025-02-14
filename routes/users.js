@@ -3,6 +3,7 @@ const {
     getUsers,
     addUser,
     getUser,
+    getUserBio,
     updateUser,
     deleteUser
 } = require('../controllers/users');
@@ -18,6 +19,9 @@ router.route("/")
 router.route("/:id")
 .get(getUser)
 .put(updateUser)
+
+router.route("/biometrics/:id")
+.get(getUserBio)
 
 router.route("/:label")
 .delete(deleteUser)

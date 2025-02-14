@@ -2,6 +2,7 @@ const {
     createUser,
     retrieveUsers,
     retrieveUser,
+    getUserWithBiometricData,
     changeUser,
     removeUser,
     createUserProfile,
@@ -26,25 +27,39 @@ const addUser = async (req, res) => {
     const response = await createUser(req.body); // Call createUser and get the response
     
     if (!response.success) {
-        res.status(500).send(response.message); // Send the error message from createUser
+        res.status(500).send(response.message);
+        console.log(response); // Send the error message from createUser
         } else {
             res.status(201).send(response.message); // Send the success message from createUser
         }
 };
 
 const getUsers = async (req, res) => {
-    let users;
+    let usersWithBiometrics;
     if (req.query) {
-        users = await retrieveUsers(req.query);
+        usersWithBiometrics = await retrieveUsers(req.query);
     } else {
-        users = await retrieveUsers()
+        usersWithBiometrics= await retrieveUsers()
     }
-    res.status(200).json(users);
+    res.status(200).json(usersWithBiometrics);
 }
+
 const getUser = async (req, res) => {
-    const user = await retrieveUser(req.params.id);
-    res.status(200).json(user);
+
+    const usersWithBiometrics = await retrieveUser(req.params.id)
+    res.status(200).json(usersWithBiometrics)
 }
+
+const getUserBio = async (req, res) => {
+    const biometricsData = await getUserWithBiometricData(req.params.id);
+    if (!biometricsData.success) {
+        res.status(500).send(biometricsData.message);
+    } else {
+        res.status(200).json(biometricsData);
+    }
+}
+
+
 const updateUser = async (req, res) => {
     if (!await changeUser(req.params.id, req.body)) {
         res.status(500).send("Cannot update user");        
@@ -105,6 +120,7 @@ module.exports = {
     addUser,
     getUsers,
     getUser,
+    getUserBio,
     updateUser,
     deleteUser,
     addUserProfile,

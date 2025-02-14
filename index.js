@@ -1,5 +1,6 @@
 const express = require("express")
 const server = express()
+const bodyParser = require("body-parser")
 const cors = require("cors")
 const dotenv = require("dotenv")
 const passport = require("passport")
@@ -21,6 +22,11 @@ const checkUserAuthenticated = require("./middlewares/checkUserAuthenticated")
 const passwordResetRouter = require("./routes/password")
 const succursaleRouter = require("./routes/succursales") // Import the succursale routes
 const statisticsRouter = require("./routes/statistics")
+
+
+// Increase the limit to a higher value (e.g., 10mb)
+server.use(bodyParser.json({ limit: '10mb' })); // For JSON payloads
+server.use(bodyParser.urlencoded({ limit: '10mb', extended: true })); // For URL-encoded payloads
 
 // Import the cleanup service (this will start the cron job)
 require("./services/paymentCleanupService")
@@ -68,6 +74,6 @@ server.use("/periods", periodRouter)
 server.use("/vehicles", vehicleRouter)
 server.use("/statistics", statisticsRouter)
 
-server.listen(port, () => {
+server.listen(port,"0.0.0.0", () => {
   console.log(`Server listening on port : ${port}`)
 })
