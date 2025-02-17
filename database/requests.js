@@ -1153,41 +1153,8 @@ const removeProgram = async (program_label) => {
 
 // Users requests handlers
 
-/* const createUser = async (datas) => {
-  try {
-    const hashedPassword = bcrypt.hashSync(datas.password, 15)
 
-    const userData = {
-      ...datas,
-      date_naissance: new Date(datas.date_naissance),
-      password: hashedPassword,
-      profil: {
-        connect: {
-          label: datas.profil,
-        },
-      },
-    }
-
-    if (datas.association) {
-      userData.association = {
-        connect: {
-          nom: datas.association,
-        },
-      }
-    }
-
-    await prisma.utilisateur.create({
-      data: userData,
-    })
-
-    return true
-  } catch (error) {
-    console.error(error)
-    return false
-  }
-} */
-
-  const createUser = async (datas) => {
+  /* const createUser = async (datas) => {
     const {
       firstname,
       lastname,
@@ -1302,11 +1269,291 @@ const removeProgram = async (program_label) => {
       return { success: false, message: "An error occurred while creating the user." }; // Return error message
     }
   };
+   */
   
-  const retrieveUsers = async (query) => {
+
+ /*  const createUser = async ({
+    firstname,
+    lastname,
+    gender,
+    phone1,
+    phone2,
+    street,
+    city,
+    postalCode,
+    country,
+    state,
+    username,
+    password,
+    merchantCode,
+    profil,
+    association,
+    biometrics,
+  }) => {
+    console.log("Received data:", {
+      firstname,
+      lastname,
+      gender,
+      phone1,
+      phone2,
+      street,
+      city,
+      postalCode,
+      country,
+      state,
+      username,
+      merchantCode,
+      profil,
+      association,
+      biometrics,
+    });
+  
+    try {
+      // Check if the phone1 or username already exists
+      const existingUser = await prisma.utilisateur.findFirst({
+        where: {
+          OR: [
+            { phone1 },
+            { username },
+          ],
+        },
+      });
+  
+      console.log("Existing user:", existingUser);
+      if (existingUser) {
+        const message = existingUser.phone1 === phone1
+          ? "Phone already in use. Please use another phone."
+          : "Username already in use. Please use another username.";
+        return { success: false, message };
+      }
+  
+      // Prepare user data for creation
+      const userData = {
+        personalInfos: {
+          create: {
+            firstname,
+            lastname,
+            gender,
+            phone1,
+            phone2: phone2 || null,
+          },
+        },
+        address: {
+          create: {
+            street,
+            city,
+            postalCode,
+            country,
+            state,
+          },
+        },
+        account: {
+          create: {
+            username,
+            password,
+            merchantCode,
+          },
+        },
+      };
+  
+      // Handle profile association
+      if (profil) {
+        userData.profil = {
+          connect: { label: profil },
+        };
+      }
+  
+      // Handle association
+      if (association) {
+        userData.association = {
+          connect: { nom: association },
+        };
+      }
+  
+      // Handle biometric data
+      if (biometrics) {
+        userData.biometrics = {
+          create: {
+            faceData: biometrics.faceData
+              ? {
+                  create: {
+                    pos: biometrics.faceData.pos,
+                    data: biometrics.faceData.data,
+                  },
+                }
+              : undefined,
+            fingers: biometrics.fingers_data
+              ? {
+                  createMany: {
+                    data: biometrics.fingers_data.map((finger) => ({
+                      pos: finger.pos,
+                      data: finger.data,
+                    })),
+                  },
+                }
+              : undefined,
+          },
+        };
+      }
+  
+      console.log("User data to be created:", userData);
+  
+      await prisma.utilisateur.create({
+        data: userData,
+      });
+  
+      return { success: true, message: "User created successfully." };
+    } catch (error) {
+      console.error(error);
+      return { success: false, message: "An error occurred while creating the user." };
+    }
+  };
+   */
+
+  const createUser = async (input) => {
+    // Log the entire input object for debugging
+    //console.log("Received input object:", input);
+  
+    // Destructure the input object with correct field names
+    const {
+      firstname,
+      lastname,
+      gender,
+      phone1,
+      phone2,
+      association,
+      street,
+      city,
+      postalCode,
+      country,
+      state,
+      merchantCode,
+      username,
+      password,
+      biometrics,
+      profil,
+      type, 
+    } = input;
+  
+    // Validate required fields
+    if (!firstname || !lastname || !phone1 || !username || !password) {
+      console.log("Missing required fields, returning error message.", firstname, lastname, phone1, username, password);
+      return { success: false, message: "Missing required fields." };
+    }
+  
+    try {
+      // Check if the phone1 or username already exists
+      const existingUser = await prisma.utilisateur.findFirst({
+        where: {
+          OR: [
+            { phone1: phone1 },
+            { username: username },
+          ],
+        },
+      });
+  
+      if (existingUser) {
+        const message = existingUser.phone1 === phone1
+          ? "Phone already in use. Please use another phone."
+          : "Username already in use. Please use another username.";
+        return { success: false, message };
+      }
+  
+      // Hash the password
+      const hashedPassword = await bcrypt.hash(password, 15);
+  
+      // Prepare user data for creation
+      const userData = {
+        firstname,
+        lastname,
+        gender,
+        phone1,
+        phone2: phone2 || null,
+        street,
+        city,
+        postalCode,
+        country,
+        state,
+        username,
+        password: hashedPassword,
+      };
+  
+      // Conditionally populate the profil field
+      if (!type || type !== 1) {
+        userData.profil = {
+          connect: { label: "Chauffeur" }, // Populate profil with "Chauffeur" if type is null or not 1
+        };
+      }
+  
+      // Only include merchantCode if type is not 1
+      if (type !== 1) {
+        userData.merchantCode = merchantCode;
+      }
+  
+      // Handle profile association
+      if (profil) {
+        userData.profil = {
+          connect: { label: profil },
+        };
+      }
+  
+      // Handle association
+      if (association) {
+        userData.associationRef = {
+          connect: { nom: association },
+        };
+      }
+  
+      // Handle biometric data
+      if (biometrics) {
+        
+        
+        
+        userData.biometrics = {
+          create: {
+            faceData: biometrics.face_data
+              ? {
+                  create: {
+                    pos: biometrics.face_data.pos,
+                    data: biometrics.face_data.data,
+                  },
+                }
+              : null,
+            fingers: biometrics.fingers
+              ? {
+                  createMany: {
+                    data: biometrics.fingers.map((finger) => ({
+                      pos: finger.pos,
+                      data: finger.data,
+                    })),
+                  },
+                }
+              : undefined,
+          },
+        };
+      }
+  
+      // Log the user data to be created
+     // console.log("User data to be created:", userData);
+  
+      // Create the user in the database
+      await prisma.utilisateur.create({
+        data: userData,
+      });
+  
+      return { success: true, message: "User created successfully." };
+    } catch (error) {
+      console.error("Error creating user:", error);
+      return { success: false, message: "An error occurred while creating the user." };
+    }
+  };
+  
+
+ /*  const retrieveUsers = async (query) => {
     const page = parseInt(query.page);
     const limit = parseInt(query.limit);
     const profile = query.profile;
+
   
     try {
       let users;
@@ -1367,8 +1614,48 @@ const removeProgram = async (program_label) => {
       console.error(error);
     }
   };
+   */
+
+  const retrieveUsers = async (query) => {
+    const page = query.page ? parseInt(query.page) : 1;
+    const limit = query.limit ? parseInt(query.limit) : 10;
+    const profile = query.profile;
+
+    try {
+        const whereClause = profile ? { profil_label: profile } : {};
+
+        const users = await prisma.utilisateur.findMany({
+            where: whereClause,
+            skip: (page - 1) * limit,
+            take: limit,
+            orderBy: {
+              // Specify the field to order by; replace 'fieldName' with your actual field
+              createdAt: 'desc', // Use 'asc' for ascending order
+            },
+            include: {
+                //profil: true,
+                //associationRef: true,
+                /* biometrics: {
+                    select: {
+                        id: true, // Récupérer uniquement l'ID, pas les données Base64
+                    },
+                }, */
+            },
+        });
+
+        const totalUsers = await prisma.utilisateur.count({ where: whereClause });
+
+        return users ; // Return both users and totalUsers as an object
+
+    } catch (error) {
+        console.error("Erreur lors de la récupération des utilisateurs:", error);
+        throw new Error("Failed to retrieve users"); // Optional: throw an error for handling upstream
+    }
+};
+
   
-/* const retrieveUser = async (user_id) => {
+
+  /* const retrieveUser = async (user_id) => {
   try {
     const user = await prisma.utilisateur.findUnique({
       where: {
@@ -1390,7 +1677,7 @@ const removeProgram = async (program_label) => {
     console.error("Error retrieving user:", error);
   }
 }; */
-const retrieveUser = async (user_id) => {
+/* const retrieveUser = async (user_id) => {
   try {
     // First query: Fetch specific fields
     const userFields = await prisma.utilisateur.findUnique({
@@ -1432,13 +1719,147 @@ const retrieveUser = async (user_id) => {
     console.error("Error retrieving user:", error);
   }
 };
+ */
+const retrieveUser = async (user_id) => {
+  try {
+    const user = await prisma.utilisateur.findUnique({
+      where: {
+        id: user_id,
+      },
+      include: {
+      /*   biometrics: {
+          select: {
+            id: true, // Id données biométriques
+          },
+        }, */
+        //profil: true, // Profil utilisateur
+        //associationRef: true, // Association liée
+      },
+    });
+
+    /* if (!user) {
+      return { success: false, message: "Utilisateur non trouvé." };
+    } */
+
+    return  user ;
+  } catch (error) {
+    console.error("Erreur lors de la récupération de l'utilisateur:", error);
+  }
+};
+
+//  fonction pour récupérer un utilisateur avec ses données biométriques
+/* const getUserWithBiometricData = async (userId) => {
+  try {
+      const user = await prisma.utilisateur.findUnique({
+          where: { id: userId },
+          include: {
+              biometrics: {
+                  include: {
+                      faceData: true,
+                      fingers: true,
+                  },
+              },
+          },
+      });
+
+      if (!user ) {
+          return {
+              success: false,
+              message: "Utilisateur non trouvé.",
+          };
+      }
+
+      return {
+          success: true,
+          data: user,
+      };
+  } catch (error) {
+      console.error("Erreur lors de la récupération des données biométriques:", error);
+      return {
+          success: false,
+          message: "Une erreur est survenue lors de la récupération des données biométriques.",
+      };
+  }
+}; */
+
+/* const getUserWithBiometricData = async (user_id) => {
+  try {
+    const userBiometrics = await prisma.utilisateur.findUnique({
+      where: { id: user_id },
+      select: {
+        biometrics: true, // Récupérer uniquement les données biométriques
+      },
+    });
+
+    if (!userBiometrics || !userBiometrics.biometrics) {
+      return { success: false, message: "Aucune donnée biométrique trouvée." };
+    }
+
+    // Convertir les données biométriques en Base64
+    const biometricsData = {
+      faceData: userBiometrics.biometrics.faceData
+        ? {
+            ...userBiometrics.biometrics.faceData,
+            data: userBiometrics.biometrics.faceData.data.toString("base64"),
+          }
+        : null,
+      fingers: userBiometrics.biometrics.fingers.map(finger => ({
+        ...finger,
+        data: finger.data.toString("base64"),
+      })),
+    };
+    console.log("biometricsData----------------------------------", biometricsData)
+    return{ success:true ,data:biometricsData,message:"Données biométriques récupérées avec succès"};
+   
+  } catch (error) {
+    console.error("Erreur lors de la récupération des données biométriques:", error);
+    return { success: false, message: "Une erreur est survenue lors de la récupération des données biométriques." };
+    //throw new Error("Failed to retrieve biometrics");
+  }
+};
+ */
+
+
+
+const getUserWithBiometricData = async (user_id) => {
+  try {
+    const userBiometrics = await prisma.biometricData.findUnique({
+      where: { userId: user_id },
+      include: {
+        faceData: true,
+        fingers: true,
+      },
+    });
+
+    if (!userBiometrics) {
+      return { success: false, message: "Aucune donnée biométrique trouvée." };
+    }
+
+    // Vérifie si les données sont sous forme de Buffer avant conversion
+    const biometricData = {
+      faceData: userBiometrics.faceData
+        ? userBiometrics.faceData.data.toString("base64")
+        : null,
+      fingers: userBiometrics.fingers
+        ? userBiometrics.fingers.map(finger => finger.data.toString("base64"))
+        : [],
+    };
+
+    console.log("Biometric Data:", biometricData);
+    return {success:true,data:biometricData,message:"Données biométriques récupérées avec succès"};
+
+  } catch (error) {
+    console.error("Erreur lors de la récupération des données biométriques:", error);
+    return { success: false, message: "Une erreur est survenue lors de la récupération des données biométriques." };
+  }
+};
 
 const getUsersByAssociation = async (association) => {
   try {
     return await prisma.utilisateur.findMany({
       where: {
-        association_label: association,
-        include: { business: true, biometrics: { include: { face_data: true, fingers_data: true } } },
+        associationRef: association,
+        include: { profil: true/* , biometrics: { include: { face_data: true, fingers_data: true } } */ },
 
       },
     })
@@ -1912,7 +2333,7 @@ const getUsersByAssociation = async (association) => {
     return false;
   }
 }; */
-const changeUser = async (user_id, datas) => {
+/* const changeUser = async (user_id, datas) => {
   const {
     email,
     username,
@@ -2017,8 +2438,237 @@ const changeUser = async (user_id, datas) => {
     console.error("Error updating user:", error);
     return false;
   }
-};
+}; */
 
+/* const changeUser = async (user_id, datas) => {
+  try {
+    // Construire dynamiquement l'objet updateData
+    const updateData = Object.fromEntries(
+      Object.entries(datas).filter(([_, v]) => v !== undefined)
+    );
+
+    // Mise à jour des informations personnelles (business -> personalInfos)
+   
+      updateData.personalInfos = {
+        update: {
+          activityName: datas.business.activityName,
+          registration: datas.business.registration,
+          sector: datas.business.sector,
+          activitySize: datas.business.activitySize,
+          businessPhone1: datas.business.businessPhone1,
+          businessStreet: datas.business.businessStreet,
+          businessCountry: datas.business.businessCountry,
+          businessState: datas.business.businessState,
+          businessCity: datas.business.businessCity,
+          merchantCode: datas.business.merchantCode,
+        },
+      };
+    
+
+    // Mise à jour des données biométriques
+    if (datas.biometrics) {
+      updateData.biometrics = {
+        update: {
+          faceData: datas.biometrics.faceData
+            ? {
+                update: {
+                  pos: datas.biometrics.faceData.pos,
+                  data: datas.biometrics.faceData.data,
+                },
+              }
+            : undefined,
+          fingers: datas.biometrics.fingers
+            ? {
+                deleteMany: {}, // Supprime les anciennes empreintes
+                create: datas.biometrics.fingers.map((finger) => ({
+                  pos: finger.pos,
+                  data: finger.data,
+                })),
+              }
+            : undefined,
+        },
+      };
+    }
+
+    // Mise à jour du profil (connexion à un profil existant)
+    if (datas.profil) {
+      updateData.profile = {
+        connect: {
+          label: datas.profil,
+        },
+      };
+    }
+
+    // Mise à jour de l'association (connexion à une association existante)
+    if (datas.association) {
+      updateData.association = {
+        connect: {
+          nom: datas.association,
+        },
+      };
+    }
+
+    // Exécuter la mise à jour avec Prisma
+    const updatedUser = await prisma.utilisateur.update({
+      where: { id: user_id },
+      data: updateData,
+    });
+
+    return {
+      success: true,
+      message: "Utilisateur mis à jour avec succès.",
+      data: updatedUser,
+    };
+  } catch (error) {
+    console.error("Erreur lors de la mise à jour de l'utilisateur:", error);
+    return {
+      success: false,
+      message: "Une erreur est survenue lors de la mise à jour de l'utilisateur.",
+      error: error.message,
+    };
+  }
+}; */
+
+const changeUser = async (user_id, datas) => {
+  
+  
+    const {
+      username,
+      name,
+      phone1,
+      phone2,
+      password,
+      merchantCode,
+      street,
+      city,
+      postalCode,
+      country,
+      state,
+      type,
+      biometrics,
+      profil_label,
+      association,
+    } = datas;
+
+      // Build the data object dynamically
+    const updateData = {};
+
+     // Only add fields to updateData if they exist in datas
+    if (username) updateData.username = username;
+    if (name) updateData.name = name;
+    if (phone1) updateData.phone1 = phone1;
+    if (phone2) updateData.phone2 = phone2;
+    if (password) updateData.password = password;
+    if (street) updateData.street = street;
+    if (city) updateData.city = city;
+    if (postalCode) updateData.postalCode = postalCode;
+    if (country) updateData.country = country;
+    if (state) updateData.state = state;
+    if (type) updateData.type = type;
+    if (merchantCode) updateData.merchantCode = merchantCode;
+    if (profil_label) updateData.profil_label = profil_label;
+    if (association) updateData.association = association;
+
+  
+
+    // Vérifier si l'utilisateur existe
+    const userExists = await prisma.utilisateur.findUnique({
+      where: { id: user_id },
+      include: { biometrics: false },
+    });
+
+    if (!userExists) {
+      return {
+        success: false,
+        message: `Utilisateur avec l'ID ${user_id} introuvable.`,
+      };
+    }
+
+ /*    // Connect to existing profil if it exists
+    if (profil) {
+      updateData.profil = {
+        connect: {
+          label: profil,
+        },
+      };
+    } */
+
+    /* // Connect to existing association if it exists
+    if (association) {
+      updateData.association = {
+        connect: {
+          nom: association,
+        },
+      };
+    } */
+
+    // Mise à jour des données biométriques
+    if (biometrics) {
+      updateData.biometrics = {
+        upsert: {
+          create: {
+            faceData: biometrics.faceData
+              ? {
+                  create: {
+                    pos: biometrics.faceData.pos,
+                    data: biometrics.faceData.data,
+                  },
+                }
+              : undefined,
+            fingers: biometrics.fingers
+              ? {
+                  create: biometrics.fingers.map((finger) => ({
+                    pos: finger.pos,
+                    data: finger.data,
+                  })),
+                }
+              : undefined,
+          },
+          update: {
+            faceData: biometrics.faceData
+              ? {
+                  upsert: {
+                    create: {
+                      pos: biometrics.faceData.pos,
+                      data: biometrics.faceData.data,
+                    },
+                    update: {
+                      pos: biometrics.faceData.pos,
+                      data: biometrics.faceData.data,
+                    },
+                  },
+                }
+              : undefined,
+            fingers: biometrics.fingers
+              ? {
+                  deleteMany: {}, // Supprime les anciennes empreintes
+                  create: biometrics.fingers.map((finger) => ({
+                    pos: finger.pos,
+                    data: finger.data,
+                  })),
+                }
+              : undefined,
+          },
+        },
+      };
+    }
+
+    try {
+    // Exécuter la mise à jour
+    await prisma.utilisateur.update({
+      where: { id: user_id },
+      data: updateData,
+    });
+
+    return true;
+
+  } catch (error) {
+    console.error("Erreur lors de la mise à jour de l'utilisateur:", error);
+    return false;
+      
+  
+  }
+};
 
 
 /* const changeUser = async (user_id, datas) => {
@@ -2054,21 +2704,86 @@ const changeUser = async (user_id, datas) => {
     return false
   }
 } */
-const removeUser = async (user_id) => {
-  try {
-    await prisma.utilisateur.delete({
-      where: {
-        id: user_id,
-      },
-    })
-    return true
-  } catch (error) {
-    console.error(error)
-    return false
-  }
-}
+  /* const removeUser = async (user_id) => {
+    try {
+      // Vérifier si l'utilisateur existe
+      const userExists = await prisma.utilisateur.findUnique({
+        where: { id: user_id },
+      });
+  
+      if (!userExists) {
+        console.warn(`Utilisateur avec l'ID ${user_id} introuvable.`);
+        return false;
+      }
+  
+      // Supprimer les données biométriques et les relations associées en une seule transaction
+      await prisma.$transaction([
+        // Delete related faceData if it exists
+        prisma.faceData.deleteMany({ where: { biometricId: user_id } }),
+        
+        // Delete related fingerprints if they exist
+        prisma.fingers.deleteMany({ where: { biometricId: user_id } }),
+  
+        // Delete biometric data
+        prisma.biometricData.deleteMany({ where: { userId: user_id } }),
+  
+        // Delete the user
+        prisma.utilisateur.delete({ where: { id: user_id } }),
+      ]);
+  
+      console.log(`Utilisateur avec l'ID ${user_id} supprimé avec succès.`);
+      return true;
+    } catch (error) {
+      console.error("Erreur lors de la suppression :", error);
+      return false;
+    }
+  }; */
+  const removeUser = async (user_id) => {
+    try {
+      // Vérifier si l'utilisateur existe
+      const userExists = await prisma.utilisateur.findUnique({
+        where: { id: user_id },
+      });
+  
+      if (!userExists) {
+        console.warn(`Utilisateur avec l'ID ${user_id} introuvable.`);
+        return false;
+      }
+  
+      // Supprimer les données biométriques et les relations associées en une seule transaction
+      await prisma.$transaction([
+        // Delete related faceData if it exists
+        prisma.faceData.deleteMany({
+          where: { biometricId: userExists.biometrics?.id }, // Use the correct relation field
+        }),
+          
+        // Delete related fingerprints if they exist
+        prisma.fingerData.deleteMany({
+          where: { biometricId: userExists.biometrics?.id }, // Use the correct relation field
+        }),
+  
+        // Delete biometric data
+        prisma.biometricData.delete({
+          where: { userId: user_id }, // Correct deletion by userId
+        }),
+  
+        // Delete the user
+        prisma.utilisateur.delete({
+          where: { id: user_id },
+        }),
+      ]);
+  
+      console.log(`Utilisateur avec l'ID ${user_id} supprimé avec succès.`);
+      console.log("Utilisateur supprimé avec succès.",userExists);
+      return true;
+    } catch (error) {
+      console.error("Erreur lors de la suppression :", error);
+      return false;
+    }
+  };
+  
 
-const findUserByMailOrPhone = async (email, phone) => {
+/* const findUserByMailOrPhone = async (email, phone) => {
   try {
     const user = await prisma.utilisateur.findFirst({
       where: {
@@ -2090,7 +2805,32 @@ const findUserByMailOrPhone = async (email, phone) => {
   } catch (error) {
     console.error(error)
   }
-}
+} */
+
+  const findUserByMailOrPhone = async (phone) => {
+    try {
+      const user = await prisma.utilisateur.findFirst({
+        where: {
+        
+            phone1: phone 
+         
+          
+        },
+        include: {
+          profil: true, // Profil utilisateur
+          associationRef: true, // Association liée
+        },
+      });
+      console.log("Utilisateur existant :", user);
+  
+      return user;
+    } catch (error) {
+      console.error("Erreur lors de la récupération de l'utilisateur :", error);
+      return null;
+    }
+  };
+  
+  
 
 const createUserProfile = async (datas) => {
   try {
@@ -2607,7 +3347,7 @@ const getStats = async () => {
 const getStatsByAssociation = async (associationLabel) => {
   const totalDrivers = await prisma.utilisateur.count({
     where: {
-      association_label: associationLabel,
+      association: associationLabel,
       profil_label: "Chauffeur",
     },
   })
@@ -2741,7 +3481,6 @@ const getStatsByProgram = async (programLabel) => {
         nom: true,
       },
     })
-
     const associationIds = associations.map((association) => association?.id)
     const associationNoms = associations.map((association) => association?.nom)
 
@@ -2782,12 +3521,10 @@ const getStatsByProgram = async (programLabel) => {
       where: {
         profil_label: "Chauffeur",
         association: {
-          nom: {
-            in: associationNoms,
-          },
+          in: associationNoms, // Correctly using the array directly
         },
       },
-    })
+    });
 
     // Count total succursales linked to associations in the program
     const totalSuccursales = await prisma.succursale.count({
@@ -2873,6 +3610,7 @@ module.exports = {
   createUser,
   retrieveUsers,
   retrieveUser,
+  getUserWithBiometricData,
   changeUser,
   removeUser,
   findUserByMailOrPhone,

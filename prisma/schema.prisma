@@ -146,79 +146,67 @@ enum PaymentStatus {
 }
 
 
+
 model Utilisateur {
   id          String    @id @default(uuid())
-  firstname   String
-  lastname    String
-  gender      String    // "H" or "F"
-  email       String    @unique
-  phone1      String
-  phone2      String
-  street      String
-  city        String
-  postalCode  String
-  country     String
-  state       String
-  use         String    // "individual" or "business"
-  username    String    @unique
-  password    String
-  code        String    @unique //unique code field
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  // Relation fields
-  association Association? @relation(references: [nom], fields: [association_label])
-  association_label String?
+  
+  firstname  String
+  lastname   String
+  gender     String  // "H" or "F"
+  phone1     String
+  phone2     String?
+  type        Int? // Identification du type (Admin = 1)
+
+  street     String
+  city       String
+  postalCode String
+  country    String
+  state      String
+
+  merchantCode String? @unique  // Exclure `merchantCode` si `Utilisateur.personalInfos.type = 1`
+  username     String  @unique
+  password     String
+
+  // Biometrics Information
+  biometrics BiometricData?
+  
+    // Relation fields
+  associationRef Association? @relation(references: [nom], fields: [association])
+  association String?
   profil Profil_Utilisateur? @relation(references: [label], fields: [profil_label])
   profil_label String?
   paiements Paiement[]
   vehicule Vehicule[]
-  business    BusinessProfile? // One-to-one relation
-  biometrics   Biometrics? // One-to-one relation with the biometric model
 
-}
-
-model BusinessProfile {
-  id             Int       @id @default(autoincrement())
-  activityName   String?
-  registration   String?
-  sector         String?
-  activitySize   String?
-  businessPhone1 String?
-  businessPhone2 String?
-  businessStreet String?
-  businessCountry String?
-  businessState  String?
-  businessCity   String?
-  merchantCode   String?
-  userId         String       @unique
-  user           Utilisateur      @relation(fields: [userId], references: [id])
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 
-model Biometrics {
+model BiometricData {
   id          Int         @id @default(autoincrement())
-  userId      String         @unique
-  user        Utilisateur        @relation(fields: [userId], references: [id])
-  face_data    FaceData?
-  fingers_data  FingerData[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  user      Utilisateur @relation(fields: [userId], references: [id])
+  userId    String @unique
+
+  faceData  FaceData?
+  fingers   FingerData[]?
 }
 
 model FaceData {
   id           Int        @id @default(autoincrement())
   biometricId  Int        @unique
-  biometrics    Biometrics  @relation(fields: [biometricId], references: [id])
+  biometrics    BiometricData  @relation(fields: [biometricId], references: [id])
   pos          String     // E.g., "UP", "FRONT"
-  data         String     // Base64-encoded face data
+  data         Bytes     // Base64-encoded face data
 }
 
 model FingerData {
   id           Int        @id @default(autoincrement())
   biometricId  Int
-  biometrics    Biometrics  @relation(fields: [biometricId], references: [id])
+  biometrics    BiometricData  @relation(fields: [biometricId], references: [id])
   pos          Int        // Finger position (e.g., 1 for thumb, 2 for index)
-  data         String     // Base64-encoded fingerprint data
+  data         Bytes     // Base64-encoded fingerprint data
 }
+
+
+
